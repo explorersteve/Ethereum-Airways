@@ -25,10 +25,11 @@ Greenfield: no Nuxt app, no Foundry project, no Convex code exists yet.
 | Vessel Sepolia (chain 11155111) | `0x1bbf5064e2238d9C9D993A6Bc15aE86e6f2f57eC` |
 | Sepolia Vessel liveness | `MAX_SUPPLY()=10000`, `claimIsActive()=true`, `claimedCount()=122`, `PRICE_PER_UNIT()=1e13` |
 | Craft type distribution | Deterministic per token ID, **different seed per chain** (mainnet 8421 = Capsule, Sepolia 8421 = Capsule, mainnet 9973 = Vault, Sepolia 9997 = Vault) |
-| **Manifest craft (Sepolia)** | **6002** — `Vault`, claimed, unlocked, `craftToEntry = 20`, capacity 6002 bytes/entry, owner `0xCcf0a1307E5e5Ad04E85d94d7f9D400390F0118a`, delegate currently `0xB55748F3E1f1a2430fCFeAD67482AF91D5d5116e` (must be re-pointed) |
+| **Manifest craft (Sepolia)** | **6675** — `Vault`, unlocked, `craftToEntry = 0`, capacity 6675 bytes/entry, delegate unset. **Not yet claimed** — operator claims it for 0.06675 Sepolia ETH (`6675 × PRICE_PER_UNIT`). |
 | **Manifest craft (mainnet)** | **6669** — `Vault`, claimed, unlocked, `craftToEntry = 0`, capacity 6669 bytes/entry, owner `0xCcf0a1307E5e5Ad04E85d94d7f9D400390F0118a`, delegate unset |
-| Craft 6669 on Sepolia | `Capsule` — **not usable** as a manifest. Capsules overwrite one payload; Vaults append entries. Sepolia therefore uses 6002. |
-| Binding payload capacity | 6002 bytes (the smaller of the two crafts). The encoded manifest must fit this on both chains. |
+| Craft 6669 on Sepolia | `Capsule` (`craftToVaultStatus = false`) — **not usable** as a manifest. Capsules overwrite one payload; Vaults append numbered entries. Craft types are deterministic per ID but seeded differently per deployment, so the manifest craft ID necessarily differs per chain. |
+| Binding payload capacity | 6669 bytes (the smaller of the two crafts). The encoded manifest must fit this on both chains. |
+| Entry parity | Both crafts start at `craftToEntry = 0`, so Sepolia test entry numbers mirror mainnet. The contract still reads the counter and never assumes a starting value. |
 | Vessel byte capacity rule | payload bytes per entry <= craft token ID |
 
 ## Architecture decisions (locked)
@@ -68,14 +69,16 @@ Greenfield: no Nuxt app, no Foundry project, no Convex code exists yet.
 Resolved:
 
 - Brand: **Ethereum Airways**, symbol `ETHAIR`.
-- Manifest crafts: Sepolia **6002**, mainnet **6669**. Both owned by `0xCcf0a1307E5e5Ad04E85d94d7f9D400390F0118a`.
+- Manifest crafts: Sepolia **6675** (to be claimed), mainnet **6669** (owned by `0xCcf0a1307E5e5Ad04E85d94d7f9D400390F0118a`).
 - RPC: operator has an Alchemy/Infura key and a WalletConnect project ID.
 
 Still needed, and blocking only from plan 14 onward:
 
-1. The actual Alchemy/Infura RPC URLs and WalletConnect project ID, placed in `.env.local` (never committed).
-2. Treasury address for `withdraw()`.
-3. Deployer key access for `0xCcf0…118a`, or confirmation that it will call `setDelegate` manually on both chains.
+1. Claim Sepolia craft **6675** from the operator wallet (0.06675 Sepolia ETH). Confirm
+   `craftToClaimed(6675) == true` and `ownerOf(6675)` is the operator afterwards.
+2. The actual Alchemy/Infura RPC URLs and WalletConnect project ID, placed in `.env.local` (never committed).
+3. Treasury address for `withdraw()`.
+4. Deployer key access for `0xCcf0…118a`, or confirmation that it will call `setDelegate` manually on both chains.
 
 ## Commands used throughout
 

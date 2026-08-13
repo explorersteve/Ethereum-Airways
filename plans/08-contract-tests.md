@@ -44,11 +44,11 @@ Plans 06 and 07 done.
    - `vesselCraftId != 0 && vesselEntry != 0`, and entries are strictly increasing with mint count
    - contract balance == sum of all `totalPaid` minus withdrawals
 7. `contracts/test/fork/VesselFork.t.sol`, skipped unless the RPC env var is present:
-   - Sepolia fork: read `craftToVaultStatus(6002) == true`, `craftToLocked(6002) == false`,
-     `craftToEntry(6002)`, `ownerOf(6002)`, and assert capacity 6002 exceeds a real encoded
-     manifest payload length
-   - mainnet fork: same reads against the chosen production craft; assert it is a Vault and
-     unlocked before it is ever configured
+   - Sepolia fork (craft **6675**): read `craftToVaultStatus == true`, `craftToLocked == false`,
+     `craftToEntry`, `ownerOf`, and assert capacity 6675 exceeds a real encoded manifest payload
+     length
+   - mainnet fork (craft **6669**): same reads; assert it is a Vault, unlocked, and owned by the
+     operator before it is ever configured
    - a fork-only write test that `vm.prank`s the real craft owner to set the delegate and complete
      one booking. Never use a real private key; `vm.prank` only.
 8. `forge coverage` on `src/` excluding mocks; record the numbers in the plan log. Investigate any
@@ -72,7 +72,8 @@ slither . || true
 - Full suite green with zero skipped non-fork tests.
 - Every §87 atomicity assertion passes for all five Vessel failure modes.
 - Invariant campaign passes at the configured runs/depth.
-- Fork tests confirm the real Sepolia craft 6002 is a writable Vault with sufficient capacity.
+- Fork tests confirm Sepolia craft 6675 and mainnet craft 6669 are writable Vaults with capacity
+  above the measured payload length. Record that measured length here — plan 14 asserts against it.
 - Slither findings triaged; each accepted finding documented in `contracts/SECURITY-CHECKLIST.md`.
 
 ## Commit

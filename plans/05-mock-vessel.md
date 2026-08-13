@@ -14,7 +14,8 @@ Plan 04 done.
 - Official interface: `IVESSEL.sol` from `producedbydav/The-Vessel`, `pragma ^0.8.20`.
 - Mainnet `0xECb92Cc7112b80A2234936315BbB493fb48d1463`; Sepolia
   `0x1bbf5064e2238d9C9D993A6Bc15aE86e6f2f57eC` (same interface, verified live).
-- Byte capacity per payload write = craft token ID. Craft 6002 → 6002 bytes.
+- Byte capacity per payload write = craft token ID. Sepolia craft 6675 → 6675 bytes; mainnet craft
+  6669 → 6669 bytes.
 - Vault write path: `setPayloadHolder(tokenId, bytes)` appends and increments `craftToEntry`.
 - Capsule write path replaces the single payload — a Capsule must never be used as the manifest.
 - Craft type is deterministic per token ID but **seeded differently per chain**.
@@ -50,8 +51,10 @@ Plan 04 done.
    reverts, non-vault reverts, Vault appends increment the counter, Capsule replace does not,
    `vaultToEntry` returns the exact bytes written.
 4. `contracts/test/helpers/VesselFixture.sol` — shared setup deploying MockVessel with a
-   6002-capacity Vault craft, an owner address, and a starting entry count of 20 to mirror the real
-   Sepolia craft state.
+   6669-capacity Vault craft at entry 0, mirroring the real crafts (mainnet 6669, Sepolia 6675).
+   Use the smaller capacity so tests bind against the tighter of the two chains. Include a second
+   fixture craft with a deliberately small capacity to exercise `VesselPayloadTooLarge`, and one
+   with a non-zero starting entry to prove the contract never assumes the counter starts at 0.
 
 ## Verification
 
@@ -66,7 +69,8 @@ forge test --match-path "test/MockVessel.t.sol" -vv
 
 - Vendored interface signatures match the upstream file exactly; nothing invented.
 - Mock enforces `payload.length <= craftId` and Vault-vs-Capsule entry semantics.
-- Fixture reproduces the real craft 6002 shape (Vault, unlocked, entry 20, capacity 6002).
+- Fixture reproduces the real craft shape (Vault, unlocked, entry 0, capacity 6669) plus a
+  small-capacity craft and a non-zero-entry craft.
 
 ## Commit
 

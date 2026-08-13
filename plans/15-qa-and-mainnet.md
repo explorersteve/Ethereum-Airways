@@ -42,8 +42,9 @@ Plan 14 done, with Sepolia running a real booking.
    `craftToEntry = 0`, capacity 6669 bytes per entry, owner
    `0xCcf0a1307E5e5Ad04E85d94d7f9D400390F0118a`, delegate unset. Re-verify all four conditions
    immediately before deploying (`ownerOf`, `craftToVaultStatus`, `craftToLocked`, capacity vs the
-   measured payload length from plan 08). Note this craft starts at entry 0, so the first mainnet
-   booking is entry 1, whereas Sepolia started at 20 — the app must read the counter, never assume.
+   measured payload length from plan 08). Both this craft and Sepolia 6675 start at entry 0, so
+   mainnet entry numbers will match what testing produced. The contract still reads the counter
+   rather than assuming a starting value.
 9. Mainnet deployment in brief §121 order: deploy BoardingPass against
    `0xECb92Cc7112b80A2234936315BbB493fb48d1463` with craft id 6669 → deploy renderer →
    `setRenderer` → craft owner calls `setDelegate` → verify delegate, vault status, lock status →
