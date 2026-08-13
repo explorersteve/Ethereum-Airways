@@ -1,0 +1,37 @@
+# Nuxt
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
+# Node
+node_modules
+
+# Env (keep example)
+.env
+.env.*
+!.env.example
+
+# Foundry
+contracts/out
+contracts/cache
+contracts/broadcast
+
+# Convex
+.convex
+
+# Coverage / tests
+coverage
+
+# Logs and OS
+logs
+*.log
+.DS_Store
+Thumbs.db
+
+# Editor
+.fleet
+.idea
+*.swp
