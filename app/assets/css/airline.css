@@ -1118,6 +1118,77 @@
   justify-self: start;
 }
 
+.airline-review {
+  display: grid;
+  gap: var(--spacer);
+}
+
+.airline-review article {
+  padding: var(--spacer-lg);
+  background: var(--airline-white);
+  border: var(--border);
+  border-radius: var(--border-radius);
+}
+
+.airline-review h2 {
+  margin: 0 0 var(--spacer);
+  font-size: var(--font-md);
+}
+
+.airline-review dl,
+.airline-review p {
+  margin: 0;
+}
+
+.airline-review dl {
+  display: grid;
+  gap: var(--spacer-sm);
+}
+
+.airline-review dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacer);
+  font-size: var(--font-sm);
+}
+
+.airline-review dt {
+  color: var(--muted);
+}
+
+.airline-review dd {
+  margin: 0;
+  font-weight: 650;
+  text-align: end;
+}
+
+.airline-review__total {
+  padding-block-start: var(--spacer-sm);
+  border-block-start: var(--border);
+}
+
+.airline-consent {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--spacer);
+  align-items: start;
+  padding: var(--spacer);
+  background: var(--airline-rail);
+  border-radius: var(--border-radius);
+  font-size: var(--font-sm);
+  color: var(--color-semi);
+}
+
+.airline-consent input {
+  margin-block-start: 0.2rem;
+}
+
+.airline-review__wallet {
+  display: grid;
+  gap: var(--spacer);
+  justify-items: start;
+}
+
 @media (max-width: 900px) {
   .airline-funnel--seats {
     grid-template-columns: 1fr;

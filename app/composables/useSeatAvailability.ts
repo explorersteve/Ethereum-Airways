@@ -5,7 +5,6 @@ import {
 } from "~/lib/booking/availability";
 import type { AvailabilityStatus } from "~/lib/booking/seatVisual";
 import { SEAT_IDS } from "~/lib/booking/seats";
-import { readChainSeatAvailability } from "~/lib/evm/seatAvailability";
 
 const REFRESH_MS = 45_000;
 
@@ -13,6 +12,7 @@ export function useSeatAvailability() {
   const availability = shallowRef(new Map<number, boolean>());
   const status = ref<AvailabilityStatus>("loading");
   const contractApplied = ref(false);
+  const { readAvailability, contractAddress } = useBoardingPassContract();
 
   const { data: seatIndex } = useConvexQuery(
     api.seats.listSeatIndex,
@@ -38,8 +38,14 @@ export function useSeatAvailability() {
   );
 
   async function refresh() {
+    if (!contractAddress.value) {
+      if (!contractApplied.value) {
+        status.value = "error";
+      }
+      return;
+    }
     try {
-      const chain = await readChainSeatAvailability(SEAT_IDS);
+      const chain = await readAvailability(SEAT_IDS);
       let next = applyContractAvailability(
         availability.value,
         SEAT_IDS,

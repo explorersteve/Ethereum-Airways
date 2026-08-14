@@ -1,6 +1,13 @@
-# Nuxt Minimal Starter
+# Ethereum Airways
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Airline booking site for an onchain boarding pass. Ethereum is the ownership
+authority; this frontend never submits a locally computed fare as `msg.value`.
+
+## Privacy consent
+
+The checkout checkbox is **product disclosure**, not an onchain permission.
+Direct `bookAndMint` callers bypass it. Passenger name, date of birth, and
+handle are written permanently to Ethereum and may not be removable.
 
 ## Setup
 

@@ -18,7 +18,6 @@ import {
 } from "../../app/lib/booking/seatVisual";
 import { SEATS, seatById } from "../../app/lib/booking/seats";
 import { formatEth } from "../../app/lib/format/eth";
-import { readChainSeatAvailability } from "../../app/lib/evm/seatAvailability";
 
 const seat12A = seatById(121)!;
 
@@ -186,9 +185,3 @@ describe("checked bags and totals", () => {
   });
 });
 
-describe("availability stub", () => {
-  it("reports every seat available without implying a loaded UI", async () => {
-    const result = await readChainSeatAvailability([11, 121, 326]);
-    expect(result).toEqual([true, true, true]);
-  });
-});

@@ -12,6 +12,7 @@ const {
   syncSession,
 } = useBookingSync();
 const { availability, status } = useSeatAvailability();
+const claimedNotice = useState("seat-claimed-notice", () => "");
 
 const continueReady = computed(
   () => state.value.selectedSeatId !== undefined,
@@ -27,6 +28,7 @@ function onSelectSeat(seatId: number) {
   if (next === undefined) {
     clearSeat();
   } else {
+    claimedNotice.value = "";
     selectSeat(next);
   }
   void syncSession(next === undefined ? "traveler" : "seated");
@@ -60,7 +62,10 @@ async function onContinue() {
         class="airline-funnel__status"
         role="status"
       >
-        <template v-if="status === 'loading'">
+        <template v-if="claimedNotice">
+          {{ claimedNotice }}
+        </template>
+        <template v-else-if="status === 'loading'">
           Checking which seats are open…
         </template>
         <template v-else-if="status === 'error'">

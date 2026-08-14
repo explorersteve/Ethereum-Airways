@@ -17,7 +17,7 @@
     "contracts:test": "forge test --root contracts",
     "contracts:fmt": "forge fmt --root contracts",
     "anvil": "anvil",
-    "abi:sync": "node -e \"console.log('abi:sync is implemented in plan 12')\""
+    "abi:sync": "node --experimental-strip-types scripts/sync-abi.ts"
   },
   "dependencies": {
     "@1001-digital/layers.evm": "^3.0.3",
