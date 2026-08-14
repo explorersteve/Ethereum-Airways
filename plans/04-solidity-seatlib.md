@@ -70,3 +70,11 @@ forge test --match-path test/SeatLibFuzz.t.sol -vvv
 ## Commit
 
 `feat(contracts): seat geometry, deterministic pricing, and date libraries`
+
+## Plan log
+
+- Executed 2026-08-13.
+- `SeatLib` / `DateLib` are `internal pure`; `InvalidSeat` / `InvalidMonth` custom errors.
+- Exhaustive 0–999 existence test proves **184** valid seats; all brief §83 prices match wei.
+- Fuzz (512 runs): invalid seats revert; hierarchy and per-cabin monotonicity hold.
+- `forge fmt --check`, `forge build` (no warnings), `forge test -vv` exit 0.
