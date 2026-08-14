@@ -71,3 +71,13 @@ Manual checks in the browser:
 ## Commit
 
 `feat: add 1001 evm layer foundation with mainnet, sepolia, and anvil chains`
+
+## Plan log
+
+- Executed 2026-08-13.
+- Layer: `@1001-digital/layers.evm@3.0.3` (inspect notes in `docs/1001-layer-notes.md`).
+- Direct deps: `viem@2.48.4`, `@wagmi/core@3.4.6` (pinned to the layer). `@types/luxon` added so `pnpm typecheck` can see the layer's luxon imports.
+- Nitro: override `preset: node-server` and `externals.trace: false`. The layer's `node-cluster` + file-trace hung on WalletConnect.
+- Convex module URL defaults to `https://diligent-seahorse-531.convex.cloud` (empty string 500s in `convex-vue`).
+- `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` exit 0. Dev SSR `/` returns 200 with no `window is not defined`.
+- Wallet connect / network switch still need a browser wallet on Sepolia (operator).
