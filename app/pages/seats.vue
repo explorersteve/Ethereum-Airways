@@ -24,6 +24,9 @@ function onSelectSeat(seatId: number) {
     available: availability.value.get(seatId),
     selected: state.value.selectedSeatId === seatId,
   });
+  if (visual !== "available" && visual !== "selected") {
+    return;
+  }
   const next = nextSelectedSeatId(state.value.selectedSeatId, seatId, visual);
   if (next === undefined) {
     clearSeat();
@@ -31,7 +34,9 @@ function onSelectSeat(seatId: number) {
     claimedNotice.value = "";
     selectSeat(next);
   }
-  void syncSession(next === undefined ? "traveler" : "seated");
+  void syncSession(next === undefined ? "traveler" : "seated").catch(() => {
+    // Local seat choice is already persisted.
+  });
 }
 
 async function onContinue() {

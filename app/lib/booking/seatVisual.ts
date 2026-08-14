@@ -37,7 +37,7 @@ export function seatVisualState(args: {
   if (args.selected) {
     return "selected";
   }
-  if (args.available === true) {
+  if (args.available === true || args.status === "ready" || args.status === "error") {
     return "available";
   }
   return "loading";
@@ -70,11 +70,11 @@ export function nextSelectedSeatId(
   clicked: number,
   state: SeatVisualState,
 ): number | undefined {
+  if (state === "selected" && current === clicked) {
+    return undefined;
+  }
   if (state !== "available" && state !== "selected") {
     return current;
-  }
-  if (current === clicked) {
-    return undefined;
   }
   return clicked;
 }

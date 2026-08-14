@@ -118,10 +118,10 @@ export function applySelectSeat(state: BookingState, seatId: number): void {
 }
 
 export function applyClearSeat(state: BookingState): void {
-  delete state.selectedSeatId;
-  delete state.selectedSeatLabel;
-  delete state.selectedSeatPriceWei;
-  delete state.authoritativeQuoteWei;
+  state.selectedSeatId = undefined;
+  state.selectedSeatLabel = undefined;
+  state.selectedSeatPriceWei = undefined;
+  state.authoritativeQuoteWei = undefined;
 }
 
 export function applySetBags(state: BookingState, bagCount: number): void {
@@ -173,10 +173,10 @@ export function applyReset(state: BookingState): void {
   state.twitterHandle = next.twitterHandle;
   state.bagCount = next.bagCount;
   delete state.dateOfBirthUint32;
-  delete state.selectedSeatId;
-  delete state.selectedSeatLabel;
-  delete state.selectedSeatPriceWei;
-  delete state.authoritativeQuoteWei;
+  state.selectedSeatId = undefined;
+  state.selectedSeatLabel = undefined;
+  state.selectedSeatPriceWei = undefined;
+  state.authoritativeQuoteWei = undefined;
   delete state.walletAddress;
   delete state.txHash;
   delete state.tokenId;
@@ -217,12 +217,17 @@ export function derivedTotalWei(state: BookingState): bigint {
 /** Fill empty local fields from Convex. Local entered values always win. */
 export function mergeRemoteDraft(
   state: BookingState,
-  remote: { session: RemoteBookingSession; draft: RemoteBookingDraft | null },
+  remote: {
+    session: RemoteBookingSession;
+    draft: RemoteBookingDraft | null;
+    skipSeat?: boolean;
+  },
 ): void {
   if (remote.draft && state.fullName.trim().length === 0) {
     applySetTraveler(state, remote.draft);
   }
   if (
+    !remote.skipSeat &&
     state.selectedSeatId === undefined &&
     remote.session.selectedSeatId !== undefined
   ) {

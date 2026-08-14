@@ -102,6 +102,17 @@ describe("booking state", () => {
     expect(local.bagCount).toBe(9);
   });
 
+  it("does not restore a remote seat after the traveler cleared one", () => {
+    const state = createBookingState("abc");
+    applyClearSeat(state);
+    mergeRemoteDraft(state, {
+      session: { selectedSeatId: 121, bagCount: 0 },
+      draft: null,
+      skipSeat: true,
+    });
+    expect(state.selectedSeatId).toBeUndefined();
+  });
+
   it("reset keeps the session id", () => {
     const state = createBookingState("keep-me");
     applySetTraveler(state, {

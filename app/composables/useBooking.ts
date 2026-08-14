@@ -60,12 +60,16 @@ export function useBooking() {
     persist(state.value);
   }
 
+  const seatTouched = useState("booking-seat-touched", () => false);
+
   function selectSeat(seatId: number) {
+    seatTouched.value = true;
     applySelectSeat(state.value, seatId);
     persist(state.value);
   }
 
   function clearSeat() {
+    seatTouched.value = true;
     applyClearSeat(state.value);
     persist(state.value);
   }
@@ -86,6 +90,7 @@ export function useBooking() {
   }
 
   function reset() {
+    seatTouched.value = false;
     applyReset(state.value);
     persist(state.value);
   }
@@ -94,7 +99,10 @@ export function useBooking() {
     session: RemoteBookingSession;
     draft: RemoteBookingDraft | null;
   }) {
-    mergeRemoteDraft(state.value, remote);
+    mergeRemoteDraft(state.value, {
+      ...remote,
+      skipSeat: seatTouched.value,
+    });
     persist(state.value);
   }
 

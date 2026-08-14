@@ -100,6 +100,33 @@ describe("seat visual states", () => {
     expect(nextSelectedSeatId(undefined, 121, available)).toBe(121);
     expect(nextSelectedSeatId(121, 46, available)).toBe(46);
     expect(nextSelectedSeatId(121, 121, selected)).toBeUndefined();
+    expect(nextSelectedSeatId(undefined, 46, available)).toBe(46);
+  });
+
+  it("keeps unknown seats selectable after availability has resolved or failed", () => {
+    expect(
+      seatVisualState({
+        status: "ready",
+        available: undefined,
+        selected: false,
+      }),
+    ).toBe("available");
+    expect(
+      seatVisualState({
+        status: "error",
+        available: undefined,
+        selected: false,
+      }),
+    ).toBe("available");
+    expect(
+      seatIsDisabled(
+        seatVisualState({
+          status: "error",
+          available: undefined,
+          selected: false,
+        }),
+      ),
+    ).toBe(false);
   });
 
   it("uses exact ARIA label strings", () => {
