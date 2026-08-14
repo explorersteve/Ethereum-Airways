@@ -1,80 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
-import {VesselFixture} from "./helpers/VesselFixture.sol";
+import {BoardingPassFixture} from "./helpers/BoardingPassFixture.sol";
 import {BoardingPass} from "../src/BoardingPass.sol";
+import {BoardingPassRenderer} from "../src/BoardingPassRenderer.sol";
 import {BoardingPassData} from "../src/interfaces/IBoardingPass.sol";
 import {IVessel} from "../src/interfaces/IVessel.sol";
-import {MockVessel} from "../src/mocks/MockVessel.sol";
-
-/// @dev Same ABI layout as the frozen `abi.encode` tuple in `BoardingPass._buildManifest`.
-struct ManifestV1 {
-    bytes4 magic;
-    uint8 version;
-    address issuer;
-    uint256 expectedEntry;
-    uint16 seatId;
-    address traveler;
-    string fullName;
-    uint32 dateOfBirth;
-    string twitterHandle;
-    uint16 bagCount;
-    uint256 totalPaid;
-    uint256 timestamp;
-    string origin;
-    string destination;
-    string trip;
-    string departure;
-    string flight;
-}
-
-contract ManifestDecoder {
-    function decode(bytes calldata payload) external pure returns (ManifestV1 memory m) {
-        (
-            m.magic,
-            m.version,
-            m.issuer,
-            m.expectedEntry,
-            m.seatId,
-            m.traveler,
-            m.fullName,
-            m.dateOfBirth,
-            m.twitterHandle,
-            m.bagCount,
-            m.totalPaid,
-            m.timestamp,
-            m.origin,
-            m.destination,
-            m.trip,
-            m.departure,
-            m.flight
-        ) =
-            abi.decode(
-                payload,
-                (
-                    bytes4,
-                    uint8,
-                    address,
-                    uint256,
-                    uint16,
-                    address,
-                    string,
-                    uint32,
-                    string,
-                    uint16,
-                    uint256,
-                    uint256,
-                    string,
-                    string,
-                    string,
-                    string,
-                    string
-                )
-            );
-    }
-}
 
 contract MockRenderer {
     function tokenURI(uint256 tokenId) external pure returns (string memory) {
@@ -156,29 +92,7 @@ contract NonIncrementingVessel is IVessel {
     function setPayloadHolder(uint256, bytes calldata) external {}
 }
 
-contract BoardingPassTest is VesselFixture {
-    uint16 internal constant SEAT_12A = 121;
-    uint32 internal constant DOB = 19980512;
-
-    BoardingPass internal pass;
-    address internal owner;
-    address internal treasury;
-    address internal traveler;
-
-    function setUp() public override {
-        super.setUp();
-        owner = makeAddr("owner");
-        treasury = makeAddr("treasury");
-        traveler = makeAddr("traveler");
-        vm.deal(traveler, 100 ether);
-
-        // MANIFEST_CRAFT_ID is 6669, which fits uint16.
-        // forge-lint: disable-next-line(unsafe-typecast)
-        pass = new BoardingPass(address(vessel), uint16(MANIFEST_CRAFT_ID), treasury, owner);
-        vm.prank(craftOwner);
-        vessel.setDelegate(MANIFEST_CRAFT_ID, address(pass));
-    }
-
+contract BoardingPassTest is BoardingPassFixture {
     function test_HappyPathMintIsAtomic() public {
         uint16 bags = 1;
         uint256 price = pass.quote(SEAT_12A, bags);
@@ -211,50 +125,23 @@ contract BoardingPassTest is VesselFixture {
         assertEq(pass.vesselPayloadFor(SEAT_12A), vessel.vaultToEntry(MANIFEST_CRAFT_ID, 1));
     }
 
-    function test_ManifestPayloadDecodesAndRoundTrips() public {
-        uint16 bags = 2;
-        uint256 price = pass.quote(SEAT_12A, bags);
-        uint256 t0 = 1_800_000_000;
-        vm.warp(t0);
-
-        vm.prank(traveler);
-        pass.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, "ada", bags);
-
-        bytes memory payload = vessel.vaultToEntry(MANIFEST_CRAFT_ID, 1);
-        ManifestV1 memory m = new ManifestDecoder().decode(payload);
-
-        assertEq(m.magic, pass.MANIFEST_MAGIC());
-        assertEq(m.version, pass.MANIFEST_VERSION());
-        assertEq(m.issuer, address(pass));
-        assertEq(m.expectedEntry, 1);
-        assertEq(m.seatId, SEAT_12A);
-        assertEq(m.traveler, traveler);
-        assertEq(m.fullName, "Ada Lovelace");
-        assertEq(m.dateOfBirth, DOB);
-        assertEq(m.twitterHandle, "ada");
-        assertEq(m.bagCount, bags);
-        assertEq(m.totalPaid, price);
-        assertEq(m.timestamp, t0);
-        assertEq(m.origin, "Current Location");
-        assertEq(m.destination, "Ethereum");
-        assertEq(m.trip, "Round Trip");
-        assertEq(m.departure, "Now");
-        assertEq(m.flight, "ETH001");
-        assertEq(pass.vesselPayloadFor(SEAT_12A), payload);
+    function test_TokenIdEqualsSeatIdAcrossCabins() public {
+        uint16[5] memory seats = [uint16(11), 51, 101, 121, 251]; // 1A, 5A, 10A, 12A, 25A
+        for (uint256 i = 0; i < seats.length; i++) {
+            uint16 seatId = seats[i];
+            uint256 price = pass.quote(seatId, 0);
+            vm.prank(traveler);
+            pass.bookAndMint{value: price}(seatId, "Ada Lovelace", DOB, "ada", 0);
+            assertEq(pass.ownerOf(uint256(seatId)), traveler);
+            assertEq(pass.getBoardingPass(uint256(seatId)).seatId, seatId);
+        }
     }
 
-    function test_RevertWhen_IncorrectPaymentOverAndUnder() public {
-        uint256 price = pass.quote(SEAT_12A, 0);
-
+    function test_RevertWhen_InvalidSeat() public {
+        uint16 missing = 12; // 1B
         vm.prank(traveler);
-        vm.expectRevert(abi.encodeWithSelector(BoardingPass.IncorrectPayment.selector, price, price - 1));
-        pass.bookAndMint{value: price - 1}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
-
-        vm.prank(traveler);
-        vm.expectRevert(abi.encodeWithSelector(BoardingPass.IncorrectPayment.selector, price, price + 1));
-        pass.bookAndMint{value: price + 1}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
-
-        _assertUnminted(SEAT_12A, price);
+        vm.expectRevert(abi.encodeWithSelector(BoardingPass.InvalidSeat.selector, missing));
+        pass.bookAndMint{value: 1 ether}(missing, "Ada Lovelace", DOB, "ada", 0);
     }
 
     function test_RevertWhen_DuplicateSeat() public {
@@ -267,26 +154,6 @@ contract BoardingPassTest is VesselFixture {
         vm.prank(other);
         vm.expectRevert(abi.encodeWithSelector(BoardingPass.SeatAlreadyClaimed.selector, SEAT_12A));
         pass.bookAndMint{value: price}(SEAT_12A, "Other Person", DOB, "other", 0);
-    }
-
-    function test_RevertWhen_VesselWriteFailureRollsBack() public {
-        uint256 price = pass.quote(SEAT_12A, 0);
-        uint256 travelerBefore = traveler.balance;
-        vessel.forceWriteFailure(true);
-
-        vm.prank(traveler);
-        vm.expectRevert(MockVessel.MockVesselWriteForcedFailure.selector);
-        pass.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
-
-        _assertUnminted(SEAT_12A, price);
-        assertEq(traveler.balance, travelerBefore);
-    }
-
-    function test_RevertWhen_InvalidSeat() public {
-        uint16 missing = 12; // 1B
-        vm.prank(traveler);
-        vm.expectRevert(abi.encodeWithSelector(BoardingPass.InvalidSeat.selector, missing));
-        pass.bookAndMint{value: 1 ether}(missing, "Ada Lovelace", DOB, "ada", 0);
     }
 
     function test_RevertWhen_InvalidName() public {
@@ -303,6 +170,12 @@ contract BoardingPassTest is VesselFixture {
         vm.prank(traveler);
         vm.expectRevert(BoardingPass.InvalidName.selector);
         pass.bookAndMint{value: price}(SEAT_12A, "Ada\nLovelace", DOB, "ada", 0);
+
+        bytes memory del = bytes("Ada Lovelace");
+        del[3] = bytes1(0x7f);
+        vm.prank(traveler);
+        vm.expectRevert(BoardingPass.InvalidName.selector);
+        pass.bookAndMint{value: price}(SEAT_12A, string(del), DOB, "ada", 0);
     }
 
     function test_RevertWhen_InvalidDateOfBirth() public {
@@ -327,111 +200,27 @@ contract BoardingPassTest is VesselFixture {
         vm.prank(traveler);
         vm.expectRevert(BoardingPass.InvalidTwitterHandle.selector);
         pass.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, "ada\t", 0);
+
+        bytes memory delHandle = bytes("ada");
+        delHandle[1] = bytes1(0x7f);
+        vm.prank(traveler);
+        vm.expectRevert(BoardingPass.InvalidTwitterHandle.selector);
+        pass.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, string(delHandle), 0);
     }
 
-    function test_RevertWhen_VesselCraftNotVault() public {
-        vessel.setVaultStatus(MANIFEST_CRAFT_ID, false);
+    function test_RevertWhen_IncorrectPaymentOverAndUnder() public {
         uint256 price = pass.quote(SEAT_12A, 0);
+
         vm.prank(traveler);
-        vm.expectRevert(abi.encodeWithSelector(BoardingPass.VesselCraftNotVault.selector, MANIFEST_CRAFT_ID));
-        pass.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
-        _assertUnminted(SEAT_12A, price);
-    }
+        vm.expectRevert(abi.encodeWithSelector(BoardingPass.IncorrectPayment.selector, price, price - 1));
+        pass.bookAndMint{value: price - 1}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
 
-    function test_RevertWhen_VesselCraftLocked() public {
-        vessel.setLocked(MANIFEST_CRAFT_ID, true);
-        uint256 price = pass.quote(SEAT_12A, 0);
         vm.prank(traveler);
-        vm.expectRevert(abi.encodeWithSelector(BoardingPass.VesselCraftLocked.selector, MANIFEST_CRAFT_ID));
-        pass.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
-        _assertUnminted(SEAT_12A, price);
-    }
+        vm.expectRevert(abi.encodeWithSelector(BoardingPass.IncorrectPayment.selector, price, price + 1));
+        pass.bookAndMint{value: price + 1}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
 
-    function test_RevertWhen_VesselDelegateMismatch() public {
-        vm.prank(craftOwner);
-        vessel.setDelegate(MANIFEST_CRAFT_ID, address(0));
-        uint256 price = pass.quote(SEAT_12A, 0);
-        vm.prank(traveler);
-        vm.expectRevert(
-            abi.encodeWithSelector(BoardingPass.VesselDelegateMismatch.selector, address(pass), address(0))
-        );
-        pass.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
-        _assertUnminted(SEAT_12A, price);
-    }
-
-    function test_RevertWhen_VesselPayloadTooLarge() public {
-        vm.prank(craftOwner);
-        vessel.setDelegate(SMALL_CRAFT_ID, address(pass));
-        vm.startPrank(owner);
-        pass.pause();
-        // SMALL_CRAFT_ID is 64, which fits uint16.
-        // forge-lint: disable-next-line(unsafe-typecast)
-        pass.setVesselCraftId(uint16(SMALL_CRAFT_ID));
-        pass.unpause();
-        vm.stopPrank();
-
-        uint256 price = pass.quote(SEAT_12A, 0);
-        bytes memory sample = _samplePayload(1);
-        vm.prank(traveler);
-        vm.expectRevert(
-            abi.encodeWithSelector(BoardingPass.VesselPayloadTooLarge.selector, sample.length, SMALL_CRAFT_ID)
-        );
-        pass.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
-        _assertUnminted(SEAT_12A, price);
-        assertEq(vessel.craftToEntry(SMALL_CRAFT_ID), 0);
-    }
-
-    function test_RevertWhen_VesselEntryMismatch() public {
-        NonIncrementingVessel weird = new NonIncrementingVessel();
-        // MANIFEST_CRAFT_ID is 6669, which fits uint16.
-        // forge-lint: disable-next-line(unsafe-typecast)
-        BoardingPass other = new BoardingPass(address(weird), uint16(MANIFEST_CRAFT_ID), treasury, owner);
-        weird.setDelegateForTest(address(other));
-
-        uint256 price = other.quote(SEAT_12A, 0);
-        vm.prank(traveler);
-        vm.expectRevert(BoardingPass.VesselEntryMismatch.selector);
-        other.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
-        assertEq(other.balanceOf(traveler), 0);
-    }
-
-    function test_RevertWhen_RendererUnset() public {
-        uint256 price = pass.quote(SEAT_12A, 0);
-        vm.prank(traveler);
-        pass.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
-
-        vm.expectRevert(BoardingPass.RendererUnset.selector);
-        pass.tokenURI(SEAT_12A);
-    }
-
-    function test_RevertWhen_RendererFrozen() public {
-        address renderer = address(new MockRenderer());
-        vm.startPrank(owner);
-        pass.setRenderer(renderer);
-        pass.freezeRenderer();
-        vm.expectRevert(BoardingPass.RendererIsFrozen.selector);
-        pass.setRenderer(makeAddr("otherRenderer"));
-        vm.stopPrank();
-    }
-
-    function test_RevertWhen_NothingToWithdraw() public {
-        vm.prank(owner);
-        vm.expectRevert(BoardingPass.NothingToWithdraw.selector);
-        pass.withdraw();
-    }
-
-    function test_RevertWhen_TransferFailed() public {
-        RejectEther sink = new RejectEther();
-        vm.prank(owner);
-        pass.setTreasury(address(sink));
-
-        uint256 price = pass.quote(SEAT_12A, 0);
-        vm.prank(traveler);
-        pass.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
-
-        vm.prank(owner);
-        vm.expectRevert(BoardingPass.TransferFailed.selector);
-        pass.withdraw();
+        assertTrue(pass.isSeatAvailable(SEAT_12A));
+        assertEq(address(pass).balance, 0);
     }
 
     function test_PauseBlocksBookingOnly() public {
@@ -455,10 +244,30 @@ contract BoardingPassTest is VesselFixture {
         vm.prank(traveler);
         pass.transferFrom(traveler, to, SEAT_12A);
         assertEq(pass.ownerOf(SEAT_12A), to);
+        assertEq(pass.tokenURI(SEAT_12A), "data:application/json,{\"id\":121}");
+    }
 
+    function test_TransferDoesNotAlterTravelerRecord() public {
+        BoardingPassRenderer renderer = new BoardingPassRenderer(pass);
+        vm.prank(owner);
+        pass.setRenderer(address(renderer));
+
+        uint256 price = pass.quote(SEAT_12A, 0);
+        vm.prank(traveler);
+        pass.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
+
+        address to = makeAddr("to");
+        vm.prank(traveler);
+        pass.transferFrom(traveler, to, SEAT_12A);
+
+        assertEq(pass.ownerOf(SEAT_12A), to);
         BoardingPassData memory data = pass.getBoardingPass(SEAT_12A);
         assertEq(data.traveler, traveler);
-        assertEq(pass.tokenURI(SEAT_12A), "data:application/json,{\"id\":121}");
+        assertEq(data.fullName, "Ada Lovelace");
+
+        string memory uri = pass.tokenURI(SEAT_12A);
+        string memory json = _decodeDataUri(uri, "data:application/json;base64,");
+        assertTrue(_contains(json, "Ada Lovelace"));
     }
 
     function test_WithdrawSendsFullBalanceToTreasury() public {
@@ -473,24 +282,114 @@ contract BoardingPassTest is VesselFixture {
         assertEq(address(pass).balance, 0);
     }
 
-    function test_QuoteMatchesBasePlusSeatPlusBags() public view {
-        assertEq(pass.quote(SEAT_12A, 0), pass.BASE_FARE() + pass.seatPrice(SEAT_12A));
-        assertEq(pass.quote(SEAT_12A, 3), pass.BASE_FARE() + pass.seatPrice(SEAT_12A) + pass.BAG_PRICE() * 3);
-        assertEq(pass.seatLabel(SEAT_12A), "12A");
-        assertTrue(pass.seatExists(SEAT_12A));
-        assertFalse(pass.seatExists(12));
+    function test_RevertWhen_WithdrawNonOwner() public {
+        uint256 price = pass.quote(SEAT_12A, 0);
+        vm.prank(traveler);
+        pass.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
+
+        vm.prank(traveler);
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, traveler));
+        pass.withdraw();
     }
 
-    function test_GetSeatAvailabilitySizedForCabin() public view {
-        uint16[] memory ids = new uint16[](3);
-        ids[0] = 11; // 1A
-        ids[1] = SEAT_12A;
-        ids[2] = 12; // invalid
-        bool[] memory avail = pass.getSeatAvailability(ids);
-        assertEq(avail.length, 3);
-        assertTrue(avail[0]);
-        assertTrue(avail[1]);
-        assertFalse(avail[2]);
+    function test_RevertWhen_NothingToWithdraw() public {
+        vm.prank(owner);
+        vm.expectRevert(BoardingPass.NothingToWithdraw.selector);
+        pass.withdraw();
+    }
+
+    function test_RevertWhen_TransferFailed() public {
+        RejectEther sink = new RejectEther();
+        vm.prank(owner);
+        pass.setTreasury(address(sink));
+
+        uint256 price = pass.quote(SEAT_12A, 0);
+        vm.prank(traveler);
+        pass.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
+
+        vm.prank(owner);
+        vm.expectRevert(BoardingPass.TransferFailed.selector);
+        pass.withdraw();
+    }
+
+    function test_RevertWhen_ZeroTreasury() public {
+        vm.prank(owner);
+        vm.expectRevert(BoardingPass.TransferFailed.selector);
+        pass.setTreasury(address(0));
+    }
+
+    function test_RevertWhen_ConstructorZeroTreasury() public {
+        vm.expectRevert(BoardingPass.TransferFailed.selector);
+        // forge-lint: disable-next-line(unsafe-typecast)
+        new BoardingPass(address(vessel), uint16(MANIFEST_CRAFT_ID), address(0), owner);
+    }
+
+    function test_RevertWhen_RendererFrozen() public {
+        address renderer = address(new MockRenderer());
+        vm.startPrank(owner);
+        pass.setRenderer(renderer);
+        pass.freezeRenderer();
+        vm.expectRevert(BoardingPass.RendererIsFrozen.selector);
+        pass.setRenderer(makeAddr("otherRenderer"));
+        vm.stopPrank();
+    }
+
+    function test_RevertWhen_SetVesselCraftIdWhileUnpaused() public {
+        vm.prank(owner);
+        vm.expectRevert(Pausable.ExpectedPause.selector);
+        // forge-lint: disable-next-line(unsafe-typecast)
+        pass.setVesselCraftId(uint16(OFFSET_CRAFT_ID));
+    }
+
+    function test_RevertWhen_SetVesselCraftIdFailsReadiness() public {
+        vm.prank(owner);
+        pass.pause();
+
+        vessel.setVaultStatus(OFFSET_CRAFT_ID, false);
+        vm.prank(owner);
+        vm.expectRevert(abi.encodeWithSelector(BoardingPass.VesselCraftNotVault.selector, OFFSET_CRAFT_ID));
+        // forge-lint: disable-next-line(unsafe-typecast)
+        pass.setVesselCraftId(uint16(OFFSET_CRAFT_ID));
+
+        vessel.setVaultStatus(OFFSET_CRAFT_ID, true);
+        vessel.setLocked(OFFSET_CRAFT_ID, true);
+        vm.prank(owner);
+        vm.expectRevert(abi.encodeWithSelector(BoardingPass.VesselCraftLocked.selector, OFFSET_CRAFT_ID));
+        // forge-lint: disable-next-line(unsafe-typecast)
+        pass.setVesselCraftId(uint16(OFFSET_CRAFT_ID));
+
+        vessel.setLocked(OFFSET_CRAFT_ID, false);
+        vm.prank(owner);
+        vm.expectRevert(
+            abi.encodeWithSelector(BoardingPass.VesselDelegateMismatch.selector, address(pass), address(0))
+        );
+        // forge-lint: disable-next-line(unsafe-typecast)
+        pass.setVesselCraftId(uint16(OFFSET_CRAFT_ID));
+    }
+
+    function test_RevertWhen_RendererUnset() public {
+        uint256 price = pass.quote(SEAT_12A, 0);
+        vm.prank(traveler);
+        pass.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
+
+        vm.expectRevert(BoardingPass.RendererUnset.selector);
+        pass.tokenURI(SEAT_12A);
+    }
+
+    function test_RevertWhen_VesselEntryMismatch() public {
+        NonIncrementingVessel weird = new NonIncrementingVessel();
+        // forge-lint: disable-next-line(unsafe-typecast)
+        BoardingPass other = new BoardingPass(address(weird), uint16(MANIFEST_CRAFT_ID), treasury, owner);
+        weird.setDelegateForTest(address(other));
+
+        uint256 price = other.quote(SEAT_12A, 0);
+        vm.prank(traveler);
+        vm.expectRevert(BoardingPass.VesselEntryMismatch.selector);
+        other.bookAndMint{value: price}(SEAT_12A, "Ada Lovelace", DOB, "ada", 0);
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, uint256(SEAT_12A))
+        );
+        other.ownerOf(SEAT_12A);
     }
 
     function test_NameAndHandleBoundariesSucceed() public {
@@ -509,47 +408,46 @@ contract BoardingPassTest is VesselFixture {
         assertEq(pass.getBoardingPass(SEAT_12A).twitterHandle, "");
     }
 
-    function _assertUnminted(
-        uint16 seatId,
-        uint256 /* price */
-    )
-        internal
-        view
-    {
-        assertTrue(pass.isSeatAvailable(seatId));
-        assertEq(pass.balanceOf(traveler), 0);
-        assertEq(address(pass).balance, 0);
-        assertEq(vessel.craftToEntry(MANIFEST_CRAFT_ID), 0);
+    function test_GetSeatAvailabilitySizedForCabin() public view {
+        uint16[] memory ids = new uint16[](3);
+        ids[0] = 11;
+        ids[1] = SEAT_12A;
+        ids[2] = 12;
+        bool[] memory avail = pass.getSeatAvailability(ids);
+        assertEq(avail.length, 3);
+        assertTrue(avail[0]);
+        assertTrue(avail[1]);
+        assertFalse(avail[2]);
     }
 
-    function _repeat(string memory ch, uint256 n) internal pure returns (string memory) {
-        bytes memory one = bytes(ch);
-        bytes memory out = new bytes(n);
-        for (uint256 i = 0; i < n; i++) {
-            out[i] = one[0];
+    function _decodeDataUri(string memory uri, string memory prefix) private pure returns (string memory) {
+        bytes memory raw = bytes(uri);
+        bytes memory pre = bytes(prefix);
+        require(raw.length > pre.length, "uri too short");
+        for (uint256 i = 0; i < pre.length; i++) {
+            require(raw[i] == pre[i], "prefix mismatch");
         }
-        return string(out);
+        bytes memory b64 = new bytes(raw.length - pre.length);
+        for (uint256 j = 0; j < b64.length; j++) {
+            b64[j] = raw[pre.length + j];
+        }
+        return string(Base64.decode(string(b64)));
     }
 
-    function _samplePayload(uint256 expectedEntry) internal view returns (bytes memory) {
-        return abi.encode(
-            pass.MANIFEST_MAGIC(),
-            pass.MANIFEST_VERSION(),
-            address(pass),
-            expectedEntry,
-            SEAT_12A,
-            traveler,
-            "Ada Lovelace",
-            DOB,
-            "ada",
-            uint16(0),
-            pass.quote(SEAT_12A, 0),
-            block.timestamp,
-            pass.ORIGIN(),
-            pass.DESTINATION(),
-            pass.TRIP(),
-            pass.DEPARTURE(),
-            pass.FLIGHT()
-        );
+    function _contains(string memory haystack, string memory needle) private pure returns (bool) {
+        bytes memory h = bytes(haystack);
+        bytes memory n = bytes(needle);
+        if (n.length > h.length) return false;
+        for (uint256 i = 0; i <= h.length - n.length; i++) {
+            bool ok = true;
+            for (uint256 j = 0; j < n.length; j++) {
+                if (h[i + j] != n[j]) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok) return true;
+        }
+        return false;
     }
 }

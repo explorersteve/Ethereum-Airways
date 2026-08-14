@@ -96,8 +96,18 @@ must not be deployed as production Vessel.
       max Main middle > max Rear W/A, plus per-cabin row monotonic decrease.
 - [x] Smoke: `quote == BASE_FARE + seatPrice + BAG_PRICE * bagCount` for
       sample seats; `totalPaid == quote` on happy-path mint.
-- [ ] **Later:** occupancy invariant; fuzz all seats; fork-test real Vessel
-      on Sepolia (plan 08).
+- [x] Occupancy: a seat cannot mint twice (unit + invariant handler).
+- [x] Fuzz: `uint16` seats, quote vs `BASE_FARE + seatPrice + BAG_PRICE * bagCount`
+      including `type(uint16).max`, exact payment, name/handle round-trip.
+- [x] Fork: Sepolia 6675 and mainnet 6669 are Vaults, unlocked; sample Ada Lovelace
+      manifest is **992 bytes** (capacity 6675 / 6669). Mainnet 6669 owned by
+      `0xCcf0a1307E5e5Ad04E85d94d7f9D400390F0118a`, delegate unset until configured.
+      Sepolia 6675 `ownerOf` reverts (not yet claimed). Fork write via `vm.prank` of
+      the mainnet owner sets the delegate and completes one booking.
+- [x] Production `vaultToEntry` is **0-based** (`payloadList[id][entry]`);
+      `craftToEntry` is the 1-based count. Booking uses `craftToEntry` only (brief §65).
+      MockVessel exposes 1-based `vaultToEntry` matching stored `vesselEntry` for local
+      tests; fork tests read `vaultToEntry(craft, expectedEntry - 1)`.
 
 ## Vessel external-call assumptions
 
@@ -128,3 +138,19 @@ must not be deployed as production Vessel.
 - Token decimals / SafeERC20 / fee-on-transfer / vault inflation / infinite
   approvals / DEX oracles / MEV sandwich on swaps / EIP-712 permits /
   delegatecall proxies. Payments are native ETH only.
+
+## Plan 08 — Slither and coverage
+
+- [x] `slither` is **not installed** in this environment (`slither` / `slither-analyzer`
+      missing). Command `slither . || true` recorded as skipped, not a finding dump.
+      Re-run at QA (plan 15) once Slither is available; do not treat this as a clean
+      bill of health.
+- [x] `forge coverage` cannot compile `BoardingPass` without `via_ir` (stack too deep
+      on the 17-field `_buildManifest` encode). `--ir-minimum` fails with a Yul
+      "too deep in the stack" exception on the same encode. Coverage numbers are
+      therefore **not recorded**. Manual branch review of `BoardingPass.sol`:
+      every custom error and both sides of vault/lock/delegate, pause, freeze,
+      payment mismatch, name/handle (including DEL `0x7f`), constructor zero
+      treasury, and the five Vessel rollback modes are hit by tests. Remaining
+      uncovered surface is OpenZeppelin internals and mock-only paths (excluded).
+

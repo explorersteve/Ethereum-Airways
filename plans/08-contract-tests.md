@@ -79,3 +79,26 @@ slither . || true
 ## Commit
 
 `test(contracts): unit, fuzz, invariant, and fork coverage for booking and vessel atomicity`
+
+## Plan log
+
+- Executed 2026-08-13.
+- Suite files: `BoardingPass.t.sol`, `BoardingPassPricing.t.sol`, `BoardingPassFuzz.t.sol`,
+  `VesselIntegration.t.sol`, `ManifestPayload.t.sol`, `Invariants.t.sol`,
+  `fork/VesselFork.t.sol`, plus `test/helpers/BoardingPassFixture.sol` and
+  `ManifestCodec.sol`.
+- Non-fork: **83 tests passed, 0 skipped** (plan 08 files plus existing SeatLib / DateLib /
+  MockVessel / renderer tests). Invariants: 128 runs, depth 64, 8192 calls, 0 reverts.
+- §87: five Vessel failure modes each leave seat available, token nonexistent,
+  contract balance and `craftToEntry` unchanged, buyer balance unchanged (gas price 0).
+- Measured Ada Lovelace / 12A manifest payload: **992 bytes**. Binding capacity is
+  **6669** bytes (the smaller of mainnet 6669 and Sepolia 6675). Plan 14 should
+  assert against this measured 992-byte sample remaining well under 6669.
+- Fork (Alchemy RPCs from `.env.local`, never committed): Sepolia 6675 Vault, unlocked,
+  entry 0, delegate unset, `ownerOf` reverts (unclaimed). Mainnet 6669 Vault, unlocked,
+  entry 0, delegate unset, owner `0xCcf0…118a`. Fork write: `vm.prank` owner
+  `setDelegate` + one `bookAndMint`; production `vaultToEntry` is 0-based.
+- `forge coverage`: blocked (stack too deep without via_ir; `--ir-minimum` Yul fail).
+  Manual `BoardingPass.sol` branch review documented in `SECURITY-CHECKLIST.md`.
+- Slither not installed; triaged as skip until plan 15. No accepted Slither findings
+  to list yet.
