@@ -1,0 +1,476 @@
+/*
+ * Ethereum Airways theme.
+ * Tokens first, then layout, then one-off classes.
+ * Hex lives only in this file.
+ */
+
+:root {
+  color-scheme: light;
+
+  --airline-ink: #0b1b33;
+  --airline-accent: #2563ff;
+  --airline-surface: #f7f6f3;
+  --airline-rail: #eef1f6;
+  --airline-white: #ffffff;
+
+  --seat-available: #ffffff;
+  --seat-selected: var(--airline-accent);
+  --seat-occupied: #c5cbd3;
+  --seat-first: #c9a227;
+  --seat-comfort: #2a6f97;
+  --seat-exit: #0e7c5a;
+
+  --background: var(--airline-surface);
+  --background-semi: color-mix(in srgb, var(--airline-white) 86%, transparent);
+  --color: var(--airline-ink);
+  --color-semi: color-mix(in srgb, var(--airline-ink) 72%, transparent);
+  --primary: var(--airline-accent);
+  --muted: color-mix(in srgb, var(--airline-ink) 52%, var(--airline-white));
+  --error: #c2352b;
+  --success: #0e7c5a;
+
+  --font-family: "Inter", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --ui-font-family: var(--font-family);
+  --ui-font-size: 12px;
+  --ui-font-weight: 600;
+  --ui-letter-spacing: 0.08em;
+  --ui-color: var(--airline-ink);
+  --ui-placeholder-color: color-mix(
+    in srgb,
+    var(--airline-ink) 42%,
+    var(--airline-white)
+  );
+
+  --button-border-radius: 10px;
+  --button-background: var(--airline-white);
+  --button-background-highlight: var(--airline-rail);
+  --button-border-color-highlight: color-mix(
+    in srgb,
+    var(--airline-ink) 18%,
+    var(--airline-white)
+  );
+  --button-color: var(--airline-ink);
+  --button-color-highlight: var(--airline-ink);
+  --button-icon-color: var(--airline-ink);
+  --button-icon-color-highlight: var(--airline-ink);
+  --button-font-weight: 600;
+
+  --button-primary-background: var(--airline-accent);
+  --button-primary-border-color: var(--airline-accent);
+  --button-primary-color: var(--airline-white);
+  --button-primary-background-highlight: color-mix(
+    in srgb,
+    var(--airline-accent) 82%,
+    var(--airline-ink)
+  );
+  --button-primary-border-color-highlight: color-mix(
+    in srgb,
+    var(--airline-accent) 82%,
+    var(--airline-ink)
+  );
+  --button-primary-color-highlight: var(--airline-white);
+  --button-primary-font-weight: 600;
+
+  --button-tertiary-background: var(--airline-rail);
+  --button-tertiary-border-color: color-mix(
+    in srgb,
+    var(--airline-ink) 12%,
+    var(--airline-white)
+  );
+  --button-tertiary-color: var(--muted);
+  --button-tertiary-background-highlight: var(--airline-white);
+  --button-tertiary-border-color-highlight: var(--airline-accent);
+  --button-tertiary-color-highlight: var(--airline-ink);
+
+  --input-background: var(--airline-white);
+  --input-background-highlight: var(--airline-rail);
+
+  --card-border-radius: 10px;
+  --card-border: var(--border);
+  --card-background: var(--airline-white);
+  --card-background-highlight: var(--airline-rail);
+  --card-border-color-highlight: color-mix(
+    in srgb,
+    var(--airline-ink) 16%,
+    var(--airline-white)
+  );
+
+  --dialog-width: 27rem;
+  --dialog-border-radius: 10px;
+  --dialog-header-background: var(--airline-white);
+  --dialog-close-color: var(--airline-ink);
+  --backdrop-background: color-mix(in srgb, var(--airline-ink) 42%, transparent);
+
+  --popover-background: var(--airline-white);
+  --popover-border: var(--border);
+  --popover-border-radius: 10px;
+  --popover-header-background: var(--popover-background);
+  --popover-padding: var(--spacer);
+  --popover-arrow-fill: var(--airline-white);
+
+  --dropdown-background: var(--popover-background);
+  --dropdown-border: var(--popover-border);
+  --dropdown-border-radius: var(--popover-border-radius);
+  --dropdown-padding: var(--size-1);
+  --dropdown-arrow-fill: var(--popover-arrow-fill);
+
+  --toast-width: 22rem;
+  --toast-padding: var(--spacer-sm);
+  --toast-gap: var(--spacer-sm);
+  --toast-border-radius: 10px;
+  --toast-inset: auto 0 0 auto;
+  --toast-info-color: var(--airline-ink);
+  --toast-info-background: var(--card-background);
+  --toast-info-border-color: var(--border-color);
+  --toast-info-header-background: var(--toast-info-background);
+  --toast-success-color: var(--airline-ink);
+  --toast-success-background: var(--card-background);
+  --toast-success-border-color: var(--success);
+  --toast-success-header-background: var(--toast-success-background);
+  --toast-error-color: var(--airline-ink);
+  --toast-error-background: var(--card-background);
+  --toast-error-border-color: var(--error);
+  --toast-error-header-background: var(--toast-error-background);
+
+  --border-width: 1px;
+  --border-radius-sm: 6px;
+  --border-radius: 10px;
+  --border-radius-lg: 10px;
+  --border-color: color-mix(in srgb, var(--airline-ink) 12%, var(--airline-white));
+  --border-color-highlight: color-mix(
+    in srgb,
+    var(--airline-ink) 22%,
+    var(--airline-white)
+  );
+  --border-color-dark: var(--airline-ink);
+  --border-color-light: var(--airline-white);
+  --border: var(--border-width) solid var(--border-color);
+  --border-dark: var(--border-width) solid var(--border-color-dark);
+  --border-shadow: 0 0 0 var(--border-width) var(--border-color);
+  --border-shadow-highlight: 0 0 0 var(--border-width)
+    var(--border-color-highlight);
+
+  --shadow: 0 8px 24px rgb(11 27 51 / 8%);
+
+  --spacer-xs: var(--size-0);
+  --spacer-sm: var(--size-2);
+  --spacer: var(--size-4);
+  --spacer-md: var(--size-6);
+  --spacer-lg: var(--size-7);
+  --spacer-xl: var(--size-9);
+}
+
+@media (max-width: 480px) {
+  :root {
+    --dialog-width: calc(100vw - var(--spacer) * 2);
+  }
+}
+
+.airline-shell {
+  min-block-size: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: var(--background);
+  color: var(--color);
+}
+
+.airline-main {
+  width: min(100%, var(--content-width));
+  margin-inline: auto;
+  padding: var(--spacer-lg) var(--spacer);
+}
+
+.airline-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--spacer);
+  padding: var(--spacer) var(--spacer-md);
+  background: var(--airline-white);
+  border-block-end: var(--border);
+}
+
+.airline-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacer-sm);
+  color: inherit;
+  text-decoration: none;
+  min-inline-size: 0;
+}
+
+.airline-wordmark img {
+  display: block;
+  inline-size: 2rem;
+  block-size: 2rem;
+}
+
+.airline-wordmark__name {
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: var(--line-height-md);
+  white-space: nowrap;
+}
+
+.airline-wordmark__name small {
+  display: block;
+  color: var(--muted);
+  font-size: var(--font-xs);
+  font-weight: var(--ui-font-weight);
+  letter-spacing: var(--ui-letter-spacing);
+  text-transform: uppercase;
+}
+
+.airline-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacer-md);
+}
+
+.airline-nav a,
+.airline-nav__soon {
+  color: var(--airline-ink);
+  text-decoration: none;
+  font-size: var(--ui-font-size);
+  font-weight: var(--ui-font-weight);
+  letter-spacing: var(--ui-letter-spacing);
+  text-transform: uppercase;
+}
+
+.airline-nav a:hover,
+.airline-nav a.router-link-active {
+  color: var(--airline-accent);
+}
+
+.airline-nav__soon {
+  color: var(--muted);
+  cursor: default;
+}
+
+.airline-header__wallet {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacer-sm);
+}
+
+.airline-header__menu {
+  display: none;
+}
+
+.airline-header__drawer {
+  display: none;
+}
+
+.airline-footer {
+  padding: var(--spacer-md) var(--spacer-md) var(--spacer-lg);
+  background: var(--airline-ink);
+  color: var(--airline-white);
+}
+
+.airline-footer__inner {
+  width: min(100%, var(--content-width));
+  margin-inline: auto;
+  display: grid;
+  gap: var(--spacer-sm);
+}
+
+.airline-footer p {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: color-mix(in srgb, var(--airline-white) 78%, var(--airline-ink));
+  max-inline-size: 48rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.airline-label {
+  font-family: var(--ui-font-family);
+  font-size: var(--ui-font-size);
+  font-weight: var(--ui-font-weight);
+  letter-spacing: var(--ui-letter-spacing);
+  text-transform: uppercase;
+  color: var(--ui-color);
+}
+
+.airline-progress {
+  display: grid;
+  gap: var(--spacer-sm);
+  margin-block-end: var(--spacer-lg);
+}
+
+.airline-progress ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.airline-progress li {
+  display: flex;
+  align-items: center;
+  min-inline-size: 0;
+  flex: 1;
+}
+
+.airline-progress li:last-child {
+  flex: 0 1 auto;
+}
+
+.airline-progress__step {
+  display: flex;
+  align-items: center;
+  gap: var(--spacer-sm);
+  min-inline-size: 0;
+}
+
+.airline-progress__index {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: var(--ui-font-size);
+  font-weight: var(--ui-font-weight);
+  border: var(--border);
+  background: var(--airline-white);
+  color: var(--muted);
+  flex: none;
+}
+
+.airline-progress__label {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.airline-progress li[data-state="complete"] .airline-progress__index {
+  background: var(--airline-ink);
+  border-color: var(--airline-ink);
+  color: var(--airline-white);
+}
+
+.airline-progress li[data-state="current"] .airline-progress__index {
+  background: var(--airline-accent);
+  border-color: var(--airline-accent);
+  color: var(--airline-white);
+}
+
+.airline-progress li[data-state="current"] .airline-progress__label {
+  color: var(--airline-ink);
+}
+
+.airline-progress li[data-state="upcoming"] .airline-progress__label {
+  color: var(--muted);
+}
+
+.airline-progress__rule {
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+  margin-inline: var(--spacer-sm);
+}
+
+.airline-progress li[data-state="complete"] + li .airline-progress__rule,
+.airline-progress li[data-state="complete"] .airline-progress__rule {
+  background: var(--airline-ink);
+}
+
+.airline-progress__mobile {
+  display: none;
+  font-size: var(--ui-font-size);
+  font-weight: var(--ui-font-weight);
+  letter-spacing: var(--ui-letter-spacing);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.wallet-button {
+  background: var(--airline-white);
+  color: var(--airline-ink);
+  box-shadow: var(--border-shadow);
+  border-radius: var(--button-border-radius);
+  font-family: var(--ui-font-family);
+  font-size: var(--ui-font-size);
+  font-weight: var(--ui-font-weight);
+  letter-spacing: var(--ui-letter-spacing);
+  text-transform: uppercase;
+}
+
+.wallet-button :is(span, strong, small, .icon) {
+  color: inherit;
+}
+
+.wallet-button:is(:hover, :active, :focus, .active) {
+  background: var(--airline-rail);
+  color: var(--airline-ink);
+}
+
+.wallet-button:is(:hover, :active, :focus, .active) :is(span, strong, small, .icon) {
+  color: inherit;
+}
+
+@media (max-width: 900px) {
+  .airline-header {
+    grid-template-columns: auto auto 1fr;
+  }
+
+  .airline-nav {
+    display: none;
+  }
+
+  .airline-header__menu {
+    display: inline-flex;
+  }
+
+  .airline-header__drawer {
+    display: block;
+    grid-column: 1 / -1;
+  }
+
+  .airline-header__drawer[hidden] {
+    display: none;
+  }
+
+  .airline-header__drawer .airline-nav {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacer);
+    padding-block-start: var(--spacer);
+    border-block-start: var(--border);
+  }
+
+  .airline-progress__label {
+    display: none;
+  }
+
+  .airline-progress__mobile {
+    display: block;
+  }
+}
+
+@media (max-width: 375px) {
+  .airline-wordmark__name {
+    font-size: var(--font-sm);
+  }
+
+  .airline-header {
+    padding-inline: var(--spacer);
+  }
+}

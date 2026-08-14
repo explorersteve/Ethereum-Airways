@@ -1,15 +1,6 @@
 <template>
-  <main>
-    <h1>Ethereum Airways</h1>
-    <EvmConnectDialog>
-      <template #connected="{ address }">
-        <EvmProfile />
-        <EvmAccount
-          :address="address"
-          resolve-ens
-        />
-        <EvmSwitchNetwork />
-      </template>
-    </EvmConnectDialog>
-  </main>
+  <div>
+    <BookingProgress step="search" />
+    <h1>Where are you going?</h1>
+  </div>
 </template>

@@ -77,3 +77,11 @@ disconnect action, every `Button` variant, and text inputs. Repeat at 375px widt
 ## Commit
 
 `feat: airline theme tokens, app shell, and booking progress`
+
+## Plan log
+
+- Executed 2026-08-13.
+- Theme in `app/assets/css/airline.css` (1001 tokens + airline/seat tokens). Hex only in that file and SVG assets.
+- Shell: `AirlineHeader`, `AirlineFooter`, `BookingProgress`, `app/layouts/default.vue`.
+- `--dialog-width` is `27rem`, and `calc(100vw - var(--spacer) * 2)` under 480px.
+- `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` exit 0. Preview SSR `/` includes header, footer, progress, and wallet chip.

@@ -10,6 +10,26 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   extends: ["@1001-digital/layers.evm"],
   modules: ["convex-nuxt", "@nuxt/eslint"],
+  css: ["~/assets/css/airline.css"],
+  app: {
+    head: {
+      title: "Ethereum Airways",
+      htmlAttrs: { lang: "en" },
+      link: [
+        { rel: "icon", type: "image/svg+xml", href: "/icon.svg" },
+        { rel: "preconnect", href: "https://fonts.googleapis.com" },
+        {
+          rel: "preconnect",
+          href: "https://fonts.gstatic.com",
+          crossorigin: "anonymous",
+        },
+        {
+          rel: "stylesheet",
+          href: "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap",
+        },
+      ],
+    },
+  },
   convex: {
     url: convexUrl,
   },

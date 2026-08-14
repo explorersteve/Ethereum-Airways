@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Ethereum Airways">
-  <rect width="64" height="64" rx="10" fill="#0b1f3a"/>
-  <path d="M32 10 18 34h10l-2 20 20-28H36l2-16z" fill="#3b82f6"/>
+  <rect width="64" height="64" rx="10" fill="#0B1B33"/>
+  <path d="M12 40.5 32 12l20 28.5H40.8L32 52 23.2 40.5H12Z" fill="#2563FF"/>
+  <path d="M32 20.5 23.8 33h16.4L32 20.5Z" fill="#F7F6F3"/>
 </svg>
