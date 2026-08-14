@@ -23,7 +23,7 @@ const {
   setQuote,
   clearSeat,
 } = useBooking();
-const { quoteWei, status: quoteStatus, message: quoteMessage, refresh } =
+const { status: quoteStatus, message: quoteMessage, refresh } =
   useBookingQuote();
 const {
   isConnected,
@@ -54,10 +54,6 @@ const extrasLabel = computed(() => {
   return `${count} Checked Bags`;
 });
 
-const chainQuote = computed(
-  () => quoteWei.value ?? state.value.authoritativeQuoteWei,
-);
-
 const ctaLabel = computed(
   () => `Purchase Boarding Pass · ${formatEth(totalWei.value)} ETH`,
 );
@@ -68,8 +64,7 @@ const canPurchase = computed(
     isConnected.value &&
     isCorrectChain.value &&
     consent.value &&
-    quoteStatus.value === "ready" &&
-    chainQuote.value !== undefined &&
+    quoteStatus.value !== "claimed" &&
     !purchasing.value,
 );
 
@@ -108,7 +103,7 @@ const quoteLiveStatus = computed(() => {
     );
   }
   if (quoteStatus.value === "loading") {
-    return "Checking the current fare…";
+    return "Checking that this seat is still open…";
   }
   if (quoteStatus.value === "error") {
     return quoteMessage.value;
@@ -164,9 +159,7 @@ async function requestBooking() {
 async function onComplete(receipt: TransactionReceipt) {
   liveError.value = "";
   finalizingNote.value = "";
-  if (chainQuote.value !== undefined) {
-    setQuote(chainQuote.value);
-  }
+  setQuote(totalWei.value);
   const address = contractAddress.value;
   if (!address) {
     setResult({

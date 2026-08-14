@@ -5,6 +5,7 @@ import {
   writeContract,
 } from "@wagmi/core";
 import type { Address, Hash } from "viem";
+import { quoteWei } from "~/lib/booking/seatPricing";
 import { boardingPassAbi } from "~/lib/evm/abi/boardingPass";
 import type { BookAndMintArgs } from "~/lib/evm/bookingArgs";
 import { decodeBookingError } from "~/lib/evm/errors";
@@ -130,8 +131,8 @@ export function useBoardingPassContract() {
     if (walletChainId.value !== mainChainId) {
       throw new Error("Switch to the Ethereum Airways network to book.");
     }
-    const quote = await readQuote(args.seatId, args.bagCount);
-    const { request } = await simulateBooking(args, quote);
+    const value = quoteWei(args.seatId, args.bagCount);
+    const { request } = await simulateBooking(args, value);
     return writeContract(wagmiConfig, request);
   }
 

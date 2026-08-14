@@ -3,13 +3,10 @@ import { decodeBookingError } from "~/lib/evm/errors";
 export type QuoteStatus = "idle" | "loading" | "ready" | "error" | "claimed";
 
 export function useBookingQuote() {
-  const { state, setQuote } = useBooking();
-  const { readQuote, readSeatAvailable, contractAddress } =
-    useBoardingPassContract();
+  const { state } = useBooking();
+  const { readSeatAvailable, contractAddress } = useBoardingPassContract();
   const status = ref<QuoteStatus>("idle");
   const message = ref("");
-
-  const quoteWei = computed(() => state.value.authoritativeQuoteWei);
 
   async function refresh() {
     const seatId = state.value.selectedSeatId;
@@ -19,8 +16,8 @@ export function useBookingQuote() {
       return;
     }
     if (!contractAddress.value) {
-      status.value = "error";
-      message.value = "Booking is temporarily unavailable.";
+      status.value = "ready";
+      message.value = "";
       return;
     }
     status.value = "loading";
@@ -33,8 +30,6 @@ export function useBookingQuote() {
           "This seat was just claimed. Please choose another seat.";
         return;
       }
-      const quote = await readQuote(seatId, state.value.bagCount);
-      setQuote(quote);
       status.value = "ready";
     } catch (error) {
       const decoded = decodeBookingError(error);
@@ -64,7 +59,6 @@ export function useBookingQuote() {
   }
 
   return {
-    quoteWei,
     status,
     message,
     refresh,
