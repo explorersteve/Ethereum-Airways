@@ -15,11 +15,15 @@ export function rpcUrlForChain(chainId: number): string {
 export function syncStartBlock(): number {
   const raw = process.env.BOARDING_PASS_START_BLOCK;
   if (!raw) {
-    return 0;
+    throw new Error(
+      "BOARDING_PASS_START_BLOCK is required; set it from deployments/<network>.json deploymentBlock",
+    );
   }
   const parsed = Number.parseInt(raw, 10);
-  if (!Number.isInteger(parsed) || parsed < 0) {
-    throw new Error("Invalid BOARDING_PASS_START_BLOCK");
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new Error(
+      "BOARDING_PASS_START_BLOCK must be the deployment block, never genesis",
+    );
   }
   return parsed;
 }

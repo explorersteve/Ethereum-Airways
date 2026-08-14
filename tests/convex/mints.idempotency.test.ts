@@ -43,4 +43,31 @@ describe("convex mint index", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]?.status).toBe("verified");
   });
+
+  it("converges the browser pending row and cron verified row on one mint", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(api.seats.seedSeatIndex, {});
+    const pendingId = await t.mutation(api.mints.recordMint, {
+      chainId: verifiedArgs.chainId,
+      contractAddress: verifiedArgs.contractAddress,
+      txHash: verifiedArgs.txHash,
+      tokenId: verifiedArgs.tokenId,
+    });
+    const verifiedId = await t.mutation(
+      internal.mints.applyVerifiedMint,
+      verifiedArgs,
+    );
+    expect(verifiedId).toBe(pendingId);
+    const again = await t.mutation(
+      internal.mints.applyVerifiedMint,
+      verifiedArgs,
+    );
+    expect(again).toBe(pendingId);
+    const rows = await t.run(async (ctx) => {
+      return await ctx.db.query("mints").take(10);
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.status).toBe("verified");
+    expect(rows[0]?.txHash).toBe(verifiedArgs.txHash);
+  });
 });

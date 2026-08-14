@@ -27,9 +27,12 @@ If Convex and the chain disagree, **the chain wins**. The browser fast path
 `txHash`, `tokenId`) and never passenger data or prices. `verifyMint` and the
 five-minute `reconcile` cron read `BoardingPassMinted` and `getBoardingPass`
 from RPC (`INDEXER_RPC_URL` / `RPC_URL_<chainId>` Convex env vars — never
-`NUXT_PUBLIC_*`) before upserting. Upserts are keyed on
-`chainId + contractAddress + tokenId`, so running reconciliation twice cannot
-create duplicate rows.
+`NUXT_PUBLIC_*`) before upserting. Log scans start at
+`BOARDING_PASS_START_BLOCK`, copied from `deployments/<network>.json`
+`deploymentBlock` — never genesis. Bounded ranges retry on RPC failure.
+Upserts are keyed on `chainId + contractAddress + tokenId`, so the browser
+fast path and cron converge on one row and running reconciliation twice
+cannot create duplicates.
 
 ## Nuxt client
 

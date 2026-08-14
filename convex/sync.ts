@@ -1,79 +1,20 @@
 "use node";
 
 import { v } from "convex/values";
-import {
-  createPublicClient,
-  decodeEventLog,
-  http,
-  type Address,
-  type Hex,
-} from "viem";
+import { createPublicClient, http, type Address, type Hex } from "viem";
 import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { boardingPassAbi } from "./lib/abi";
+import { decodeMintedLogs, mintedEventAbi } from "./lib/decodeMinted";
 import { nextBlockRange, confirmedHead } from "./lib/mints";
 import { rpcUrlForChain, syncStartBlock } from "./lib/rpc";
+import { withRetry } from "./lib/retry";
 import { assertAddress, assertTxHash } from "./lib/ids";
 
 function clientFor(chainId: number) {
   return createPublicClient({
     transport: http(rpcUrlForChain(chainId)),
   });
-}
-
-type MintedEvent = {
-  traveler: Address;
-  tokenId: bigint;
-  seatId: number;
-  totalPaid: bigint;
-  bagCount: number;
-  vesselCraftId: bigint;
-  vesselEntry: bigint;
-  txHash: Hex;
-  blockNumber: bigint;
-};
-
-function decodeMintedLogs(
-  logs: readonly {
-    address: Address;
-    data: Hex;
-    topics: readonly Hex[];
-    transactionHash: Hex;
-    blockNumber: bigint | null;
-  }[],
-  contractAddress: string,
-): MintedEvent[] {
-  const expected = contractAddress.toLowerCase();
-  const decoded: MintedEvent[] = [];
-  for (const log of logs) {
-    if (log.address.toLowerCase() !== expected || log.blockNumber === null) {
-      continue;
-    }
-    try {
-      const parsed = decodeEventLog({
-        abi: boardingPassAbi,
-        data: log.data,
-        topics: [...log.topics] as [Hex, ...Hex[]],
-      });
-      if (parsed.eventName !== "BoardingPassMinted") {
-        continue;
-      }
-      decoded.push({
-        traveler: parsed.args.traveler,
-        tokenId: parsed.args.tokenId,
-        seatId: Number(parsed.args.seatId),
-        totalPaid: parsed.args.totalPaid,
-        bagCount: Number(parsed.args.bagCount),
-        vesselCraftId: parsed.args.vesselCraftId,
-        vesselEntry: parsed.args.vesselEntry,
-        txHash: log.transactionHash,
-        blockNumber: log.blockNumber,
-      });
-    } catch {
-      continue;
-    }
-  }
-  return decoded;
 }
 
 export const verifyMint = internalAction({
@@ -88,7 +29,9 @@ export const verifyMint = internalAction({
     const contractAddress = assertAddress(args.contractAddress);
     const txHash = assertTxHash(args.txHash) as Hex;
     const publicClient = clientFor(args.chainId);
-    const receipt = await publicClient.getTransactionReceipt({ hash: txHash });
+    const receipt = await withRetry(() =>
+      publicClient.getTransactionReceipt({ hash: txHash }),
+    );
     if (receipt.status !== "success") {
       throw new Error("Transaction did not succeed");
     }
@@ -103,7 +46,9 @@ export const verifyMint = internalAction({
       functionName: "getBoardingPass",
       args: [BigInt(args.tokenId)],
     });
-    const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber });
+    const block = await publicClient.getBlock({
+      blockNumber: receipt.blockNumber,
+    });
     await ctx.runMutation(internal.mints.applyVerifiedMint, {
       chainId: args.chainId,
       contractAddress,
@@ -147,6 +92,7 @@ export const reconcile = internalAction({
 
     let processed = 0;
     let ranges = 0;
+    const event = mintedEventAbi();
     for (const cursor of cursors) {
       const publicClient = clientFor(cursor.chainId);
       const head = await publicClient.getBlockNumber();
@@ -162,29 +108,31 @@ export const reconcile = internalAction({
         continue;
       }
       ranges += 1;
-      const logs = await publicClient.getLogs({
-        address: cursor.contractAddress as Address,
-        event: boardingPassAbi[0],
-        fromBlock: BigInt(range.fromBlock),
-        toBlock: BigInt(range.toBlock),
-      });
+      const logs = await withRetry(() =>
+        publicClient.getLogs({
+          address: cursor.contractAddress as Address,
+          event,
+          fromBlock: BigInt(range.fromBlock),
+          toBlock: BigInt(range.toBlock),
+        }),
+      );
       const minted = decodeMintedLogs(logs, cursor.contractAddress);
-      for (const event of minted) {
-        const tokenId = Number(event.tokenId);
+      for (const mintedEvent of minted) {
+        const tokenId = Number(mintedEvent.tokenId);
         const pass = await publicClient.readContract({
           address: cursor.contractAddress as Address,
           abi: boardingPassAbi,
           functionName: "getBoardingPass",
-          args: [event.tokenId],
+          args: [mintedEvent.tokenId],
         });
         const block = await publicClient.getBlock({
-          blockNumber: event.blockNumber,
+          blockNumber: mintedEvent.blockNumber,
         });
         await ctx.runMutation(internal.mints.applyVerifiedMint, {
           chainId: cursor.chainId,
           contractAddress: cursor.contractAddress,
           tokenId,
-          txHash: event.txHash,
+          txHash: mintedEvent.txHash,
           seatId: Number(pass.seatId),
           travelerAddress: pass.traveler,
           fullName: pass.fullName,
@@ -192,7 +140,7 @@ export const reconcile = internalAction({
           twitterHandle: pass.twitterHandle,
           bagCount: Number(pass.bagCount),
           totalPaidWei: pass.totalPaid.toString(10),
-          blockNumber: Number(event.blockNumber),
+          blockNumber: Number(mintedEvent.blockNumber),
           blockTimestamp: Number(block.timestamp),
           vesselCraftId: Number(pass.vesselCraftId),
           vesselEntry: Number(pass.vesselEntry),

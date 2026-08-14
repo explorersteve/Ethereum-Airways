@@ -11,9 +11,12 @@
 import type * as bookings from "../bookings.js";
 import type * as crons from "../crons.js";
 import type * as lib_abi from "../lib/abi.js";
+import type * as lib_decodeMinted from "../lib/decodeMinted.js";
+import type * as lib_deployments from "../lib/deployments.js";
 import type * as lib_ids from "../lib/ids.js";
 import type * as lib_mints from "../lib/mints.js";
 import type * as lib_passenger from "../lib/passenger.js";
+import type * as lib_retry from "../lib/retry.js";
 import type * as lib_rpc from "../lib/rpc.js";
 import type * as lib_seatIndexWrite from "../lib/seatIndexWrite.js";
 import type * as lib_seats from "../lib/seats.js";
@@ -33,9 +36,12 @@ declare const fullApi: ApiFromModules<{
   bookings: typeof bookings;
   crons: typeof crons;
   "lib/abi": typeof lib_abi;
+  "lib/decodeMinted": typeof lib_decodeMinted;
+  "lib/deployments": typeof lib_deployments;
   "lib/ids": typeof lib_ids;
   "lib/mints": typeof lib_mints;
   "lib/passenger": typeof lib_passenger;
+  "lib/retry": typeof lib_retry;
   "lib/rpc": typeof lib_rpc;
   "lib/seatIndexWrite": typeof lib_seatIndexWrite;
   "lib/seats": typeof lib_seats;

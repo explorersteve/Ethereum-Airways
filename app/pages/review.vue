@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { TransactionReceipt } from "viem";
+import { api } from "../../convex/_generated/api";
 import { bookAndMintArgsFromState } from "~/lib/evm/bookingArgs";
 import { decodeBookingError } from "~/lib/evm/errors";
+import { finalizeMint } from "~/lib/evm/finalizeMint";
 import { BOOKING_TX_COPY, bookingLiveMessage } from "~/lib/evm/txCopy";
 import { formatEth } from "~/lib/format/eth";
 import { priorityLabel } from "~/lib/booking/seats";
@@ -22,12 +24,19 @@ const {
 } = useBooking();
 const { quoteWei, status: quoteStatus, message: quoteMessage, refresh } =
   useBookingQuote();
-const { isConnected, isCorrectChain, submitBooking, mainChainId } =
-  useBoardingPassContract();
+const {
+  isConnected,
+  isCorrectChain,
+  submitBooking,
+  mainChainId,
+  contractAddress,
+} = useBoardingPassContract();
+const { mutate: recordMint } = useConvexMutation(api.mints.recordMint);
 
 const consent = ref(false);
 const liveError = ref("");
 const purchasing = ref(false);
+const finalizingNote = ref("");
 
 const seatPriority = computed(() =>
   seat.value ? priorityLabel(seat.value) : undefined,
@@ -90,6 +99,9 @@ const quoteLiveStatus = computed(() => {
   if (liveError.value) {
     return liveError.value;
   }
+  if (finalizingNote.value) {
+    return finalizingNote.value;
+  }
   if (quoteStatus.value === "claimed" || claimedNotice.value) {
     return (
       quoteMessage.value ||
@@ -151,14 +163,47 @@ async function requestBooking() {
   }
 }
 
-function onComplete(receipt: TransactionReceipt) {
-  setResult({
-    txHash: receipt.transactionHash,
-    walletAddress: receipt.from,
-  });
+async function onComplete(receipt: TransactionReceipt) {
+  liveError.value = "";
+  finalizingNote.value = "";
   if (displayQuote.value !== undefined) {
     setQuote(displayQuote.value);
   }
+  const address = contractAddress.value;
+  if (!address) {
+    setResult({
+      txHash: receipt.transactionHash,
+      walletAddress: receipt.from,
+    });
+    finalizingNote.value = "Finalizing your record.";
+    return;
+  }
+  const result = await finalizeMint({
+    receipt,
+    contractAddress: address,
+    chainId: mainChainId,
+    recordMint,
+  });
+  if (!result.minted) {
+    setResult({
+      txHash: receipt.transactionHash,
+      walletAddress: receipt.from,
+    });
+    finalizingNote.value =
+      "Your booking is confirmed onchain. Finalizing your record.";
+    return;
+  }
+  setResult({
+    txHash: receipt.transactionHash,
+    walletAddress: receipt.from,
+    tokenId: result.minted.tokenId,
+    vesselCraftId: result.minted.vesselCraftId,
+    vesselEntry: result.minted.vesselEntry,
+  });
+  if (!result.recorded) {
+    finalizingNote.value = "Finalizing your record.";
+  }
+  await navigateTo(`/boarding-pass/${result.minted.tokenId}`);
 }
 </script>
 
@@ -325,7 +370,7 @@ function onComplete(receipt: TransactionReceipt) {
             role="status"
             aria-live="polite"
           >
-            {{ liveError || bookingLiveMessage(step) }}
+            {{ liveError || finalizingNote || bookingLiveMessage(step) }}
           </p>
           <Button
             class="primary"
