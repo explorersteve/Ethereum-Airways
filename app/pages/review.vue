@@ -16,6 +16,7 @@ const {
   seat,
   seatPriceWei,
   bagsTotalWei,
+  totalWei,
   canReview,
   isTravelerComplete,
   setResult,
@@ -53,16 +54,13 @@ const extrasLabel = computed(() => {
   return `${count} Checked Bags`;
 });
 
-const displayQuote = computed(
+const chainQuote = computed(
   () => quoteWei.value ?? state.value.authoritativeQuoteWei,
 );
 
-const ctaLabel = computed(() => {
-  if (displayQuote.value === undefined) {
-    return "Purchase Boarding Pass";
-  }
-  return `Purchase Boarding Pass · ${formatEth(displayQuote.value)} ETH`;
-});
+const ctaLabel = computed(
+  () => `Purchase Boarding Pass · ${formatEth(totalWei.value)} ETH`,
+);
 
 const canPurchase = computed(
   () =>
@@ -71,7 +69,7 @@ const canPurchase = computed(
     isCorrectChain.value &&
     consent.value &&
     quoteStatus.value === "ready" &&
-    displayQuote.value !== undefined &&
+    chainQuote.value !== undefined &&
     !purchasing.value,
 );
 
@@ -166,8 +164,8 @@ async function requestBooking() {
 async function onComplete(receipt: TransactionReceipt) {
   liveError.value = "";
   finalizingNote.value = "";
-  if (displayQuote.value !== undefined) {
-    setQuote(displayQuote.value);
+  if (chainQuote.value !== undefined) {
+    setQuote(chainQuote.value);
   }
   const address = contractAddress.value;
   if (!address) {
@@ -306,13 +304,7 @@ async function onComplete(receipt: TransactionReceipt) {
             </div>
             <div class="airline-review__total">
               <dt>Total</dt>
-              <dd>
-                {{
-                  displayQuote !== undefined
-                    ? `${formatEth(displayQuote)} ETH`
-                    : "Checking fare…"
-                }}
-              </dd>
+              <dd>{{ formatEth(totalWei) }} ETH</dd>
             </div>
           </dl>
         </article>

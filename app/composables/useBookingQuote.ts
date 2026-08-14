@@ -4,7 +4,8 @@ export type QuoteStatus = "idle" | "loading" | "ready" | "error" | "claimed";
 
 export function useBookingQuote() {
   const { state, setQuote } = useBooking();
-  const { readQuote, readSeatAvailable } = useBoardingPassContract();
+  const { readQuote, readSeatAvailable, contractAddress } =
+    useBoardingPassContract();
   const status = ref<QuoteStatus>("idle");
   const message = ref("");
 
@@ -15,6 +16,11 @@ export function useBookingQuote() {
     if (seatId === undefined) {
       status.value = "idle";
       message.value = "";
+      return;
+    }
+    if (!contractAddress.value) {
+      status.value = "error";
+      message.value = "Booking is temporarily unavailable.";
       return;
     }
     status.value = "loading";
@@ -42,17 +48,19 @@ export function useBookingQuote() {
     }
   }
 
-  watch(
-    () => [state.value.selectedSeatId, state.value.bagCount] as const,
-    () => {
-      void refresh();
-    },
-  );
-
   if (import.meta.client) {
-    onMounted(() => {
-      void refresh();
-    });
+    watch(
+      () =>
+        [
+          state.value.selectedSeatId,
+          state.value.bagCount,
+          contractAddress.value,
+        ] as const,
+      () => {
+        void refresh();
+      },
+      { immediate: true },
+    );
   }
 
   return {

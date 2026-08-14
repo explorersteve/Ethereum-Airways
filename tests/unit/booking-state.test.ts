@@ -10,6 +10,7 @@ import {
   applySetTraveler,
   createBookingState,
   derivedBagsTotalWei,
+  derivedSeatPriceWei,
   derivedTotalWei,
   mergeRemoteDraft,
   reviewIsReady,
@@ -66,6 +67,19 @@ describe("booking state", () => {
     applyClearSeat(state);
     applySetBags(state, 1);
     expect(derivedTotalWei(state)).toBe(FLIGHT.baseFareWei + BAG_PRICE_WEI);
+  });
+
+  it("review payment line items match the trip-summary total before a chain quote", () => {
+    const state = createBookingState("abc");
+    applySelectFlight(state);
+    applySelectSeat(state, 121);
+    applySetBags(state, 2);
+    expect(state.authoritativeQuoteWei).toBeUndefined();
+    expect(derivedTotalWei(state)).toBe(
+      state.baseFareWei +
+        derivedSeatPriceWei(state) +
+        derivedBagsTotalWei(state),
+    );
   });
 
   it("fills empty local fields from a Convex draft without overwriting", () => {
