@@ -1,5 +1,9 @@
+import convex from "@convex-dev/eslint-plugin";
 import withNuxt from "./.nuxt/eslint.config.mjs";
 
-export default withNuxt({
-  ignores: ["contracts/**", "docs/**", "plans/**"],
-});
+export default withNuxt(
+  ...convex.configs.recommended,
+  {
+    ignores: ["contracts/**", "docs/**", "plans/**", "convex/_generated/**"],
+  },
+);

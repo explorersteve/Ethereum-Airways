@@ -24,6 +24,7 @@
     "@wagmi/core": "^3.4.6",
     "convex": "^1.44.0",
     "convex-nuxt": "^0.1.5",
+    "convex-vue": "^0.1.5",
     "nuxt": "^4.5.2",
     "viem": "^2.48.4",
     "vue": "^3.5.41",
@@ -36,10 +37,12 @@
     ]
   },
   "devDependencies": {
+    "@convex-dev/eslint-plugin": "^3.0.0",
     "@nuxt/eslint": "^1.17.0",
     "@nuxt/test-utils": "^4.1.0",
     "@types/luxon": "^3.7.4",
     "@vue/test-utils": "^2.4.11",
+    "convex-test": "^0.0.55",
     "happy-dom": "^20.11.2",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10",
