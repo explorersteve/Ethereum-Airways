@@ -75,3 +75,12 @@ forge test --match-path "test/MockVessel.t.sol" -vv
 ## Commit
 
 `feat(contracts): vendor IVessel surface and add production-faithful MockVessel`
+
+## Plan log
+
+- Executed 2026-08-13.
+- Vendored `IVessel` as a signature-accurate subset of official `Core Contracts/IVESSEL.sol`.
+- MockVessel: Vault append increments `craftToEntry`; Capsule replaces slot 0; capacity
+  `payload.length <= tokenId`; `MockVessel*` errors; sticky `forceWriteFailure`.
+- Fixture: Vault 6669 unlocked entry 0; small craft 64; Sepolia-id 6675 starting at entry 7.
+- `forge fmt --check`, `forge build` (no warnings), `forge test --match-path test/MockVessel.t.sol -vv` 14/14.

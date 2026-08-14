@@ -2,8 +2,10 @@
 
 Recorded from [ethskills security](https://ethskills.com/security/SKILL.md) and
 [ethskills testing](https://ethskills.com/testing/SKILL.md) before SeatLib/DateLib
-(plan 04). Items marked **later** apply when BoardingPass and the renderer land
-(plans 06–08). Libraries in this plan are `internal pure` and hold no value.
+(plan 04), extended in plan 05 for the vendored Vessel surface. Items marked
+**later** apply when BoardingPass and the renderer land (plans 06–08). SeatLib
+and DateLib are `internal pure` and hold no value. MockVessel is test-only and
+must not be deployed as production Vessel.
 
 ## Access control
 
@@ -95,7 +97,15 @@ Recorded from [ethskills security](https://ethskills.com/security/SKILL.md) and
 
 ## Vessel external-call assumptions
 
-- [x] N/A in this plan (no Vessel interface yet).
+- [x] `IVessel` is a signature-accurate subset of official `IVESSEL.sol`
+      (https://github.com/producedbydav/The-Vessel/blob/main/Core%20Contracts/IVESSEL.sol).
+      No invented methods. Mainnet `0xECb92Cc7112b80A2234936315BbB493fb48d1463`,
+      Sepolia `0x1bbf5064e2238d9C9D993A6Bc15aE86e6f2f57eC`.
+- [x] MockVessel reproduces Vault append + entry increment, Capsule slot-0
+      replace without increment, `payload.length <= tokenId`, owner-or-delegate
+      writes, owner-only `setDelegate`, and lock. Mock errors are `MockVessel*`
+      so they cannot be mistaken for BoardingPass errors. `forceWriteFailure`
+      is a sticky test knob (a reverted write cannot disarm it).
 - [ ] **Later:** Vessel is trusted infrastructure at a known address, not a
       user-supplied token. Assume `setPayloadHolder` can revert (locked,
       capacity, not delegate) and must bubble. After the call,
