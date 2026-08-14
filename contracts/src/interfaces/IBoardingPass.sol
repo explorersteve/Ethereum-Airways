@@ -26,4 +26,9 @@ interface IBoardingPass {
     function seatExists(uint16 seatId) external view returns (bool);
     function seatLabel(uint16 seatId) external view returns (string memory);
     function seatPrice(uint16 seatId) external view returns (uint256);
+    function ORIGIN() external view returns (string memory);
+    function DESTINATION() external view returns (string memory);
+    function TRIP() external view returns (string memory);
+    function DEPARTURE() external view returns (string memory);
+    function FLIGHT() external view returns (string memory);
 }

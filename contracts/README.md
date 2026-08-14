@@ -1,7 +1,10 @@
 # Ethereum Airways contracts
 
-Foundry workspace for `BoardingPass` (ERC-721 booking + Vessel manifest write) and,
-in a later plan, `BoardingPassRenderer`.
+Foundry workspace for `BoardingPass` (ERC-721 booking + Vessel manifest write) and
+`BoardingPassRenderer` (fully onchain SVG + `data:` tokenURI).
+
+`BoardingPass.setRenderer` is owner-called from the plan 14 deploy scripts and is
+never auto-frozen.
 
 ## Manifest payload (frozen)
 

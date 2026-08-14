@@ -10,6 +10,7 @@ remappings = ["@openzeppelin/=lib/openzeppelin-contracts/"]
 fs_permissions = [
   { access = "read-write", path = "./deployments" },
   { access = "read-write", path = "../deployments" },
+  { access = "read-write", path = "./out" },
 ]
 
 [fmt]
