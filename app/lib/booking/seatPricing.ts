@@ -22,7 +22,7 @@
  */
 
 import { BAG_PRICE_WEI, FLIGHT, MAX_BAGS } from "./flight";
-import { seatById } from "./seats";
+import { SEATS, seatById } from "./seats";
 
 const FIRST_BASE_WEI = 60_000_000_000_000_000n;
 const FIRST_STEP_WEI = 5_000_000_000_000_000n;
@@ -77,3 +77,8 @@ export function quoteWei(seatId: number, bagCount: number): bigint {
     BAG_PRICE_WEI * BigInt(bagCount)
   );
 }
+
+/** Frozen per-seat prices so the map never recomputes 184 formulas on bag changes. */
+export const SEAT_PRICES_WEI: ReadonlyMap<number, bigint> = new Map(
+  SEATS.map((seat) => [seat.seatId, seatPriceWei(seat.seatId)]),
+);
