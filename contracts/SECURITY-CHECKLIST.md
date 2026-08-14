@@ -10,39 +10,41 @@ must not be deployed as production Vessel.
 ## Access control
 
 - [x] SeatLib / DateLib: no privileged functions; no storage; no `msg.sender`.
-- [ ] **Later:** every admin function (`setRenderer`, `freezeRenderer`,
-      `setVesselCraftId`, `setTreasury`, `withdraw`, `pause`/`unpause`) is
-      `onlyOwner`. Prefer Ownable2Step. Pause must not freeze transfers or
-      `tokenURI`. A single-key pause is a censorship tradeoff — flag at QA;
-      treasury/deployer should move to a Safe before mainnet.
+- [x] Admin functions (`setRenderer`, `freezeRenderer`, `setVesselCraftId`,
+      `setTreasury`, `withdraw`, `pause`/`unpause`) are `onlyOwner` on
+      Ownable2Step. `whenNotPaused` is only on `bookAndMint`. `setVesselCraftId`
+      requires `whenPaused`. A single-key pause is a censorship tradeoff — flag
+      at QA; treasury/deployer should move to a Safe before mainnet.
 
 ## Reentrancy
 
 - [x] SeatLib / DateLib: no external calls.
-- [ ] **Later:** `bookAndMint` and `withdraw` use Checks-Effects-Interactions plus
-      OpenZeppelin `ReentrancyGuard`. Mint last so an ERC-721 receiver sees
-      fully written pass data. Do not use try/catch around Vessel.
+- [x] `bookAndMint` and `withdraw` use OpenZeppelin `ReentrancyGuard`.
+      Vessel write is a typed call on immutable `VESSEL` (no try/catch).
+      Pass storage is written before `_safeMint` so a receiver sees complete
+      data and cannot re-enter booking.
 
 ## External calls
 
 - [x] SeatLib / DateLib: none.
-- [ ] **Later:** Vessel `setPayloadHolder` is a typed call on an immutable
-      address. Never `delegatecall`. Never low-level `call` except `withdraw`
-      ETH with a checked return. No user-supplied call targets.
+- [x] Vessel `setPayloadHolder` is a typed call on an immutable address.
+      Never `delegatecall`. Low-level `call` only in `withdraw` ETH with a
+      checked return. No user-supplied call targets.
 
 ## Exact payment
 
 - [x] SeatLib `price` is deterministic wei; no `msg.value`.
-- [ ] **Later:** `bookAndMint` requires `msg.value == quote(...)`. Reject over-
-      and underpayment with `IncorrectPayment(expected, received)`. No refunds.
+- [x] `bookAndMint` requires `msg.value == quote(...)`. Rejects over- and
+      underpayment with `IncorrectPayment(expected, received)`. No refunds.
       ETH is 18 decimals — do not mix USDC-style 6-decimal assumptions.
 
 ## Storage layout
 
 - [x] Libraries are stateless. Contracts are **non-upgradeable** (no proxy,
       no initializer, no storage-gap requirement).
-- [ ] **Later:** keep `BoardingPassData` widths proven against maxima; do not
-      silently downcast. No UUPS/Transparent proxy.
+- [x] `BoardingPassData` widens `mintedAt`, `totalPaid`, craft id, and entry
+      to `uint256` so payload replay never downcasts `block.timestamp`,
+      `msg.value`, or `craftToEntry`. Non-upgradeable (no proxy).
 
 ## Input validation
 
@@ -51,37 +53,38 @@ must not be deployed as production Vessel.
       false; never a silent zero price.
 - [x] DateLib: `isValid` rejects month 0/13, day 0, overflow days, and
       non-leap Feb 29. `monthName` reverts `InvalidMonth` outside 1–12.
-- [ ] **Later:** name 1–48 bytes, handle ≤32, no control chars, bag count
-      bounds, zero-address treasury, Vessel vault/lock/delegate checks.
+- [x] Name 1–48 bytes, handle ≤32, no control chars, no leading `@` on
+      handle. Zero-address treasury rejected. Vessel vault/lock/delegate
+      checked before every booking. Bag count is `uint16` (mul cannot overflow).
 
 ## ERC-721 behavior
 
 - [x] N/A for libraries.
-- [ ] **Later:** `tokenId == seatId`. Mint only after payment + Vessel write.
+- [x] `tokenId == seatId`. Mint only after payment + Vessel write.
       `_ownerOf(seatId) == address(0)` before mint. Do not re-test OpenZeppelin
-      internals; test identity, occupancy, and receiver reentrancy.
+      internals; test identity, occupancy, and receiver reentrancy (plan 08).
 
 ## Metadata safety
 
 - [x] N/A for libraries (labels are fixed ASCII).
+- [x] Unset renderer reverts `RendererUnset`. Freeze is one-way.
 - [ ] **Later:** renderer must escape user strings in SVG/`tokenURI` JSON.
-      Fully onchain `data:` URI; no IPFS. Unset renderer reverts
-      `RendererUnset`. Freeze is one-way.
+      Fully onchain `data:` URI; no IPFS.
 
 ## Casts
 
 - [x] Seat row/col from `uint16` division/modulo; no narrowing that can wrap
       a valid seat into another. Prices stay `uint256` wei.
-- [ ] **Later:** no unchecked downcast of `block.timestamp`, paid wei, or
-      Vessel entry into a field that cannot hold the maximum.
+- [x] No unchecked downcast of `block.timestamp`, paid wei, or Vessel entry.
 
 ## Deployment safety
 
 - [x] Libraries have no constructor arguments and no selfdestruct.
-- [ ] **Later:** constructor sets Vessel (immutable), owner, treasury, craft
-      id. Verify Vessel vault/delegate onchain before unpausing. Verify source
-      on the explorer. Never commit deployer keys. Use `forge` + `npx convex
-      dev` locally; `forge script` production deploy only in plan 14/15.
+- [x] Constructor sets Vessel (immutable), owner, treasury, craft id, and
+      verifies Vault + unlocked. Delegate is set after deploy (chicken-egg).
+      Verify source on the explorer at launch. Never commit deployer keys.
+      Use `forge` + `npx convex dev` locally; `forge script` production deploy
+      only in plan 14/15.
 
 ## Fuzz / invariant expectations
 
@@ -91,9 +94,10 @@ must not be deployed as production Vessel.
       valid seats never revert those getters.
 - [x] Price hierarchy: min First > max Comfort > max Exit > max Main W/A >
       max Main middle > max Rear W/A, plus per-cabin row monotonic decrease.
-- [ ] **Later:** `quote == BASE_FARE + seatPrice + BAG_PRICE * bagCount`;
-      `totalPaid == quote` at mint; occupancy invariant; fork-test real Vessel
-      on Sepolia.
+- [x] Smoke: `quote == BASE_FARE + seatPrice + BAG_PRICE * bagCount` for
+      sample seats; `totalPaid == quote` on happy-path mint.
+- [ ] **Later:** occupancy invariant; fuzz all seats; fork-test real Vessel
+      on Sepolia (plan 08).
 
 ## Vessel external-call assumptions
 
@@ -106,9 +110,8 @@ must not be deployed as production Vessel.
       writes, owner-only `setDelegate`, and lock. Mock errors are `MockVessel*`
       so they cannot be mistaken for BoardingPass errors. `forceWriteFailure`
       is a sticky test knob (a reverted write cannot disarm it).
-- [ ] **Later:** Vessel is trusted infrastructure at a known address, not a
-      user-supplied token. Assume `setPayloadHolder` can revert (locked,
-      capacity, not delegate) and must bubble. After the call,
+- [x] Vessel is trusted infrastructure at a known address, not a
+      user-supplied token. `setPayloadHolder` reverts bubble. After the call,
       `craftToEntry` must equal the expected next entry or revert
       `VesselEntryMismatch`. Payload bytes ≤ craft token id. Vault crafts
       only (append); Capsules are not usable as the manifest. Do not treat

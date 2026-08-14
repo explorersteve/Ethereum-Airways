@@ -1,66 +1,46 @@
-## Foundry
+# Ethereum Airways contracts
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+Foundry workspace for `BoardingPass` (ERC-721 booking + Vessel manifest write) and,
+in a later plan, `BoardingPassRenderer`.
 
-Foundry consists of:
+## Manifest payload (frozen)
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+Every Vessel Vault entry is `abi.encode` of this tuple, in this order. Do not reorder,
+insert, or change types without bumping `MANIFEST_VERSION`.
 
-## Documentation
+| # | Solidity type | Value |
+| --- | --- | --- |
+| 1 | `bytes4` | `MANIFEST_MAGIC` (`0x45544841`) |
+| 2 | `uint8` | `MANIFEST_VERSION` (`1`) |
+| 3 | `address` | `BoardingPass` contract (`address(this)`) |
+| 4 | `uint256` | expected Vessel entry (`craftToEntry + 1`) |
+| 5 | `uint16` | `seatId` |
+| 6 | `address` | traveler (`msg.sender` at mint) |
+| 7 | `string` | `fullName` |
+| 8 | `uint32` | `dateOfBirth` (`yyyymmdd`) |
+| 9 | `string` | `twitterHandle` (no leading `@`) |
+| 10 | `uint16` | `bagCount` |
+| 11 | `uint256` | `totalPaid` (`msg.value`) |
+| 12 | `uint256` | `block.timestamp` at mint (stored as `mintedAt`) |
+| 13 | `string` | `ORIGIN` (`Current Location`) |
+| 14 | `string` | `DESTINATION` (`Ethereum`) |
+| 15 | `string` | `TRIP` (`Round Trip`) |
+| 16 | `string` | `DEPARTURE` (`Now`) |
+| 17 | `string` | `FLIGHT` (`ETH001`) |
 
-https://book.getfoundry.sh/
+`vesselPayloadFor(tokenId)` rebuilds the exact bytes from stored pass data. Decoder
+coverage lives in `test/BoardingPass.t.sol` (`test_ManifestPayloadDecodesAndRoundTrips`).
 
-## Usage
-
-### Build
-
-```shell
-$ forge build
-```
-
-### Test
-
-```shell
-$ forge test
-```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
+## Commands
 
 ```shell
-$ forge snapshot
+forge fmt --check
+forge build
+forge test -vv
 ```
 
-### Anvil
+Production deploy uses `forge script` only in plans 14/15. Development uses `forge test`
+and a local Anvil node; never `npx convex deploy` for Convex during development.
 
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+`foundry.toml` sets `via_ir = true` so the 17-field manifest `abi.encode` compiles
+without stack-too-deep.
