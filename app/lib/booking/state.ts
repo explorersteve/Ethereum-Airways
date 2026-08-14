@@ -51,6 +51,17 @@ export type BookingResult = {
   vesselEntry?: number;
 };
 
+export type RemoteBookingDraft = {
+  fullName: string;
+  dateOfBirthISO: string;
+  twitterHandle: string;
+};
+
+export type RemoteBookingSession = {
+  selectedSeatId?: number;
+  bagCount: number;
+};
+
 export function createBookingState(sessionId: string): BookingState {
   return {
     sessionId,
@@ -201,4 +212,23 @@ export function derivedTotalWei(state: BookingState): bigint {
     return quoteWei(state.selectedSeatId, state.bagCount);
   }
   return FLIGHT.baseFareWei + derivedBagsTotalWei(state);
+}
+
+/** Fill empty local fields from Convex. Local entered values always win. */
+export function mergeRemoteDraft(
+  state: BookingState,
+  remote: { session: RemoteBookingSession; draft: RemoteBookingDraft | null },
+): void {
+  if (remote.draft && state.fullName.trim().length === 0) {
+    applySetTraveler(state, remote.draft);
+  }
+  if (
+    state.selectedSeatId === undefined &&
+    remote.session.selectedSeatId !== undefined
+  ) {
+    applySelectSeat(state, remote.session.selectedSeatId);
+  }
+  if (state.bagCount === 0 && remote.session.bagCount > 0) {
+    applySetBags(state, remote.session.bagCount);
+  }
 }

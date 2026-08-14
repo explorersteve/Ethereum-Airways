@@ -53,7 +53,7 @@ function decodeMintedLogs(
       const parsed = decodeEventLog({
         abi: boardingPassAbi,
         data: log.data,
-        topics: log.topics,
+        topics: [...log.topics] as [Hex, ...Hex[]],
       });
       if (parsed.eventName !== "BoardingPassMinted") {
         continue;

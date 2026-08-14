@@ -11,6 +11,7 @@ import {
   createBookingState,
   derivedBagsTotalWei,
   derivedTotalWei,
+  mergeRemoteDraft,
   reviewIsReady,
   travelerIsComplete,
 } from "../../app/lib/booking/state";
@@ -42,6 +43,63 @@ describe("booking state", () => {
     expect(reviewIsReady(state)).toBe(true);
     applyClearSeat(state);
     expect(reviewIsReady(state)).toBe(false);
+  });
+
+  it("computes totals across seat and bag combinations in wei only", () => {
+    const state = createBookingState("abc");
+    applySelectFlight(state);
+    expect(derivedTotalWei(state)).toBe(FLIGHT.baseFareWei);
+
+    applySetBags(state, 2);
+    expect(derivedBagsTotalWei(state)).toBe(BAG_PRICE_WEI * 2n);
+    expect(derivedTotalWei(state)).toBe(FLIGHT.baseFareWei + BAG_PRICE_WEI * 2n);
+
+    applySelectSeat(state, 11);
+    expect(derivedTotalWei(state)).toBe(
+      FLIGHT.baseFareWei + seatPriceWei(11) + BAG_PRICE_WEI * 2n,
+    );
+
+    applySelectSeat(state, 122);
+    applySetBags(state, 0);
+    expect(derivedTotalWei(state)).toBe(FLIGHT.baseFareWei + seatPriceWei(122));
+
+    applyClearSeat(state);
+    applySetBags(state, 1);
+    expect(derivedTotalWei(state)).toBe(FLIGHT.baseFareWei + BAG_PRICE_WEI);
+  });
+
+  it("fills empty local fields from a Convex draft without overwriting", () => {
+    const empty = createBookingState("abc");
+    mergeRemoteDraft(empty, {
+      session: { selectedSeatId: 121, bagCount: 4 },
+      draft: {
+        fullName: "Ada Lovelace",
+        dateOfBirthISO: "1998-05-12",
+        twitterHandle: "ada",
+      },
+    });
+    expect(empty.fullName).toBe("Ada Lovelace");
+    expect(empty.selectedSeatId).toBe(121);
+    expect(empty.bagCount).toBe(4);
+
+    const local = createBookingState("abc");
+    applySetTraveler(local, {
+      fullName: "Local Name",
+      dateOfBirthISO: "2000-01-01",
+      twitterHandle: "local",
+    });
+    applySetBags(local, 0);
+    mergeRemoteDraft(local, {
+      session: { selectedSeatId: 46, bagCount: 9 },
+      draft: {
+        fullName: "Remote Name",
+        dateOfBirthISO: "1998-05-12",
+        twitterHandle: "remote",
+      },
+    });
+    expect(local.fullName).toBe("Local Name");
+    expect(local.selectedSeatId).toBe(46);
+    expect(local.bagCount).toBe(9);
   });
 
   it("reset keeps the session id", () => {

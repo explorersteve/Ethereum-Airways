@@ -17,10 +17,13 @@ import {
   derivedBagsTotalWei,
   derivedSeatPriceWei,
   derivedTotalWei,
+  mergeRemoteDraft,
   reviewIsReady,
   travelerIsComplete,
   type BookingResult,
   type BookingState,
+  type RemoteBookingDraft,
+  type RemoteBookingSession,
   type TravelerInput,
 } from "~/lib/booking/state";
 
@@ -87,6 +90,14 @@ export function useBooking() {
     persist(state.value);
   }
 
+  function hydrateFromRemote(remote: {
+    session: RemoteBookingSession;
+    draft: RemoteBookingDraft | null;
+  }) {
+    mergeRemoteDraft(state.value, remote);
+    persist(state.value);
+  }
+
   const seat = computed(() =>
     state.value.selectedSeatId !== undefined
       ? seatById(state.value.selectedSeatId)
@@ -108,6 +119,7 @@ export function useBooking() {
     setQuote,
     setResult,
     reset,
+    hydrateFromRemote,
     seat,
     seatPriceWei,
     bagsTotalWei,

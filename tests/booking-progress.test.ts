@@ -22,5 +22,8 @@ describe("booking progress", () => {
     expect(bookingStepState("search", "traveler")).toBe("complete");
     expect(bookingStepState("traveler", "traveler")).toBe("current");
     expect(bookingStepState("review", "traveler")).toBe("upcoming");
+    expect(bookingStepState("search", "flights")).toBe("complete");
+    expect(bookingStepState("flights", "flights")).toBe("current");
+    expect(bookingStepState("traveler", "flights")).toBe("upcoming");
   });
 });

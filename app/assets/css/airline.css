@@ -465,6 +465,312 @@
   }
 }
 
+.airline-home {
+  display: grid;
+  gap: var(--spacer-xl);
+}
+
+.airline-home__hero {
+  display: grid;
+  gap: var(--spacer-lg);
+}
+
+.airline-home__copy {
+  display: grid;
+  gap: var(--spacer-sm);
+  max-inline-size: 40rem;
+}
+
+.airline-home__copy h1,
+.airline-funnel__header h1,
+.airline-traveler header h1 {
+  margin: 0;
+  font-size: var(--font-xl);
+  letter-spacing: -0.04em;
+  line-height: var(--line-height-md);
+}
+
+.airline-home__copy p,
+.airline-funnel__header p,
+.airline-traveler header p {
+  margin: 0;
+  color: var(--color-semi);
+  max-inline-size: 40rem;
+}
+
+.airline-hero-visual__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+.airline-search {
+  padding: var(--spacer-lg);
+  box-shadow: var(--shadow);
+}
+
+.airline-search header {
+  display: grid;
+  gap: var(--spacer-xs);
+}
+
+.airline-search header h2 {
+  margin: 0;
+  font-size: var(--font-lg);
+}
+
+.airline-search__form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacer);
+}
+
+.airline-search__cta {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.airline-search input,
+.airline-traveler input {
+  inline-size: 100%;
+  block-size: var(--form-item-height, 2.75rem);
+  padding-inline: var(--ui-padding-inline, var(--spacer));
+  border: 0;
+  border-radius: var(--border-radius);
+  background: var(--input-background);
+  box-shadow: var(--border-shadow);
+  color: var(--color);
+  font: inherit;
+}
+
+.airline-search input:focus,
+.airline-traveler input:focus {
+  outline: none;
+  background: var(--input-background-highlight);
+  box-shadow: var(--border-shadow-highlight);
+}
+
+.airline-home__values {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacer-lg);
+}
+
+.airline-home__values article {
+  display: grid;
+  gap: var(--spacer-sm);
+  padding: var(--spacer);
+  background: var(--airline-white);
+  border: var(--border);
+  border-radius: var(--border-radius);
+}
+
+.airline-home__values h2 {
+  margin: 0;
+  font-size: var(--font-md);
+}
+
+.airline-home__values p:last-child {
+  margin: 0;
+  color: var(--color-semi);
+}
+
+.airline-funnel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18.5rem;
+  gap: var(--spacer-lg);
+  align-items: start;
+  padding-block-end: var(--spacer-xl);
+}
+
+.airline-funnel__header,
+.airline-funnel__main {
+  display: grid;
+  gap: var(--spacer);
+}
+
+.airline-funnel__status {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--font-sm);
+}
+
+.airline-flight-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--spacer-lg);
+  padding: var(--spacer-lg);
+  align-items: center;
+}
+
+.airline-flight-card__cities {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: var(--spacer);
+  align-items: center;
+  margin-block: var(--spacer-sm);
+}
+
+.airline-flight-card__cities div {
+  display: grid;
+  gap: var(--spacer-xs);
+}
+
+.airline-flight-card__cities span {
+  color: var(--muted);
+  font-size: var(--ui-font-size);
+  font-weight: var(--ui-font-weight);
+  letter-spacing: var(--ui-letter-spacing);
+  text-transform: uppercase;
+}
+
+.airline-flight-card__arrow {
+  color: var(--airline-accent);
+  font-size: var(--font-lg);
+}
+
+.airline-flight-card__meta,
+.airline-flight-card__price {
+  margin: 0;
+}
+
+.airline-flight-card__fare {
+  display: grid;
+  gap: var(--spacer-sm);
+  justify-items: end;
+  text-align: end;
+}
+
+.airline-flight-card__price {
+  font-size: var(--font-lg);
+  font-weight: 650;
+}
+
+.airline-traveler {
+  padding: var(--spacer-lg);
+  background: var(--airline-white);
+  border: var(--border);
+  border-radius: var(--border-radius);
+}
+
+.airline-traveler__privacy {
+  margin: 0;
+  padding: var(--spacer);
+  background: var(--airline-rail);
+  border-radius: var(--border-radius);
+  color: var(--color-semi);
+  font-size: var(--font-sm);
+}
+
+.airline-traveler__count,
+.airline-traveler__hint {
+  color: var(--muted);
+  font-size: var(--font-sm);
+}
+
+.airline-traveler__error {
+  margin: 0;
+  color: var(--error);
+  font-size: var(--font-sm);
+}
+
+.airline-summary {
+  position: sticky;
+  top: var(--spacer);
+}
+
+.airline-summary__panel {
+  background: var(--airline-white);
+  border: var(--border);
+  border-radius: var(--border-radius);
+  padding: var(--spacer);
+  box-shadow: var(--shadow);
+}
+
+.airline-summary__toggle {
+  display: none;
+  cursor: pointer;
+  list-style: none;
+}
+
+.airline-summary__toggle::-webkit-details-marker {
+  display: none;
+}
+
+.airline-summary__title {
+  margin: 0 0 var(--spacer);
+  font-size: var(--font-md);
+}
+
+.airline-summary__list {
+  display: grid;
+  gap: var(--spacer-sm);
+  margin: 0;
+}
+
+.airline-summary__list div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacer);
+  font-size: var(--font-sm);
+}
+
+.airline-summary__list dt {
+  color: var(--muted);
+}
+
+.airline-summary__list dd {
+  margin: 0;
+  font-weight: 650;
+}
+
+.airline-summary__total {
+  padding-block-start: var(--spacer-sm);
+  border-block-start: var(--border);
+}
+
+@media (max-width: 900px) {
+  .airline-search__form,
+  .airline-home__values,
+  .airline-funnel,
+  .airline-flight-card {
+    grid-template-columns: 1fr;
+  }
+
+  .airline-flight-card__fare {
+    justify-items: start;
+    text-align: start;
+  }
+
+  .airline-funnel {
+    padding-block-end: 8rem;
+  }
+
+  .airline-summary {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    top: auto;
+    z-index: 20;
+    padding: var(--spacer);
+    background: var(--background-semi);
+    border-block-start: var(--border);
+  }
+
+  .airline-summary__toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .airline-summary__title {
+    display: none;
+  }
+}
+
 @media (max-width: 375px) {
   .airline-wordmark__name {
     font-size: var(--font-sm);
